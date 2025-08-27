@@ -6,6 +6,13 @@
 
 import numpy as np
 from scipy.special import jn
+import matplotlib.pyplot as plt
+from scipy.optimize import fmin,minimize
+import scipy as sp
+from scipy.interpolate import interp1d
+import time
+
+
 
 def NollToQuantum(j):
     n=int(np.ceil((-3+np.sqrt(9+(8*j)))/2))
