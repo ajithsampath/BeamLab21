@@ -1,2 +1,2 @@
-# HIRAXBEAM
-Beam computing and fitting package for HIRAX (Generalisable to most radio telescopes)
+# BEACH
+BEAm Computation for Hirax (Generalisable to most radio telescopes)
