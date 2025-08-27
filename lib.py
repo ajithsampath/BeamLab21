@@ -80,3 +80,21 @@ def basis_pol(sigx,sigy,r_max,nr,nt,N):
     return (R_ell,Theta,z1);
 
 
+def twoD_Gaussian(r,theta,amp,sigx,sigy,xo, yo, tilt, off):
+    xo = float(xo)
+    yo = float(yo)
+    x=r*np.cos(theta)
+    y=r*np.sin(theta)
+    #print(x.shape)
+    #print(y.shape)
+    #x,y = np.meshgrid(x,y)
+    a = (np.cos(tilt)**2)/(2*sigx**2) + (np.sin(tilt)**2)/(2*sigy**2)
+    b = -(np.sin(2*tilt))/(4*sigx**2) + (np.sin(2*tilt))/(4*sigy**2)
+    c = (np.sin(tilt)**2)/(2*sigx**2) + (np.cos(tilt)**2)/(2*sigy**2)
+    
+    return off + amp*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo) + c*((y-yo)**2)));
+
+
+
+
+
