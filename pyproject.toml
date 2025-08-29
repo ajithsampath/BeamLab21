@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "BEACH"       # matches your package folder name
 version = "0.1.0"
-description = "Beam simulation and fitting tools for HIRAX"
+description = "Beam generation and fitting tools for HIRAX"
 authors = [
   { name = "Ajith Sampath", email = "ajithsampath1997@gmail.com" }
 ]
