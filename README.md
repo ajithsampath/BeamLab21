@@ -1,2 +1,2 @@
 # BEACH
-BEAm Computation for Hirax (Generalisable to most radio telescopes)
+BEAm Computation/Characterization for Hirax (Generalisable to most radio telescopes)
