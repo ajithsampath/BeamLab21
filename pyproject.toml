@@ -18,3 +18,5 @@ dependencies = [
   "pandas",
   "h5py"
 ]
+
+license = { text = "Apache" }

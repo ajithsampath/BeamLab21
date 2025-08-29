@@ -33,7 +33,7 @@ def QuantumToNoll(n,m):
     return j;
     
 
-def basis_cart(sigx,sigy,x,y,N):
+def basis_N(sigx,sigy,x,y,N):
     '''Routine to generate Zernike Transforms (basis) from Bessel function of first kind'''
     x,y = np.meshgrid(x/sigx,y/sigy)
     r = np.hypot(x,y)
@@ -46,6 +46,29 @@ def basis_cart(sigx,sigy,x,y,N):
     count = 0
 
     for j in range(0,N):
+        n,m = NollToQuantum(j)
+        if n>=0 and n>=abs(m) and (n-abs(m))%2==0:
+            Bes=(jn(n+1,r))/r
+            nc = (((2*n+1)*(2*n+3)*(2*n+5))/(-1)**n)**0.5
+            temp=((nc*(np.exp(1j*m*theta))/((1j**m)*2*np.pi) *(-1)**((n-m)/2) *Bes))
+            z1[count]=temp.flatten()
+            count+=1
+        
+    return z1;
+
+def basis_j(sigx,sigy,x,y,j):
+    '''Routine to generate Zernike Transforms (basis) from Bessel function of first kind'''
+    x,y = np.meshgrid(x/sigx,y/sigy)
+    r = np.hypot(x,y)
+    r[r==0] = 1e-10
+    #rho = rho/sig
+    theta = np.arctan2(y,x)
+    coef_file = np.load("coef_file.npy")
+    z1 = np.zeros((N,len(r.flatten())),dtype=np.complex128)
+
+    count = 0
+
+    for j in coef_file[:,0]:
         n,m = NollToQuantum(j)
         if n>=0 and n>=abs(m) and (n-abs(m))%2==0:
             Bes=(jn(n+1,r))/r
