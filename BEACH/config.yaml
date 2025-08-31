@@ -1,0 +1,37 @@
+  # Configuration file for BEACH
+
+  # Telescope parameters
+  Telescope_name: "Hirax"  # "Hirax" is the only supported option currently. This sets the aperture diameter and frequency range.
+  frequencyrange: [400e6, 800e6]  # frequency range in Hz
+  nchan: 16                # number of frequency channels
+  aperture_diameter: 6.0   # aperture diameter in meters, default for Hirax is 6m
+
+  # Grid parameters
+  pixels: 256       # number of pixels in x and y
+  angular_res: 0.1  # angular resolution in degrees. This sets the field of view (FOV = pixels * angular_res)
+  
+  # Output parameters
+  output_filename: "testbeam"  # output file name
+  output_format: "hdf5"      # output file format, options are "hdf5" or "npy"
+  save_intermediate: True     # whether to save intermediate results
+
+  # Gaussian model parameters
+  use_gaussian_model: False  # whether to use a Gaussian model for the beam instead of Zernike polynomials
+  gaussian_lamdabyD_coef: 1.03         # Coefficient for lambda/D to set the FWHM of the Gaussian beam
+  gaussian_amp: 1.0          # Amplitude of the Gaussian beam
+  gaussian_offset_x: 0.0   # x offset of the Gaussian beam
+  gaussian_offset_y: 0.0   # y offset of the Gaussian beam
+  gaussian_rotation: 0.0     # rotation angle of the Gaussian beam in degrees
+  gaussian_amp_offset: 0.0       # Amplitude offset of the Gaussian beam
+  gaussian_noise: 0.0        # noise level to add to the Gaussian beam
+  gaussian_noise_type: "normal" # type of noise to add, options are "normal" or "uniform"
+  gaussian_random_seed: 42   # random seed for noise generation
+
+  #Zernike model parameters
+  use_zernike_model: True  # whether to use Zernike polynomials for the beam
+  coef_file: "coeff_file.csv" # input file with Zernike coefficients (in Noll notation). A sample file is provided.
+  dtype: float64    # numpy data type for array, use float128 if supported
+  zernike_normalization: True  # normalization for Zernike coefficients, options are True or False
+  zernike_noise: 0.0  # noise level to add to Zernike model
+  zernike_noise_type: "normal" # type of noise to add, options are "normal" or "uniform"
+  zernike_random_seed: 42  # random seed for noise generation 
