@@ -111,9 +111,9 @@ class GenBeam:
         rm[rm==0] = 1e-10
         thetam = np.arctan2(ym,xm)
 
-        self.Basis = np.zeros((self.coef,len(rm.flatten())),dtype="float64")
+        self.Basis = np.zeros((len(self.coef),len(rm.flatten())),dtype="float64")
         count = 0
-        for j in range(0,self.N):
+        for j in range(0,self.coef.shape[0]):
             n,m = NollToQuantum(j)
             if n>=0 and n>=abs(m) and (n-abs(m))%2==0:
                 Bes=(jn(n+1,rm))/rm
