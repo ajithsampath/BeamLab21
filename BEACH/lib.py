@@ -32,7 +32,8 @@ def QuantumToNoll(n,m):
     j=int((n*(n+2)+m)/2)
     return j;
     
-def twoD_Gaussian(x,y,amp,sigx,sigy,xo, yo, tilt, offset):
+def twoD_Gaussian(x,y,params):
+    amp,sigx,sigy,xo, yo, tilt, = params
     xo = float(xo)
     yo = float(yo)
     tilt = np.radians(tilt)
@@ -41,25 +42,19 @@ def twoD_Gaussian(x,y,amp,sigx,sigy,xo, yo, tilt, offset):
     b = -(np.sin(2*tilt))/(4*sigx**2) + (np.sin(2*tilt))/(4*sigy**2)
     c = (np.sin(tilt)**2)/(2*sigx**2) + (np.cos(tilt)**2)/(2*sigy**2)
     
-    return offset + amp*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo) + c*((y-yo)**2)));
+    return amp*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo) + c*((y-yo)**2)));
 
-def chisq(Observed,Expected,error,k):
-    Expected = Expected.flatten()
-    Observed = Observed.flatten()
-    chi = np.vdot((Observed - Expected)/(error),(Observed - Expected)/(error))/(len(Observed) -k-2)
-    chi2=np.abs(chi)
-    return (chi2);
+
 
 
 
 class FitBeam:
-    def __init__(self,freq,x,y,Observed,error,obs_frac,N):
+    def __init__(self,freq,x,y,Observed,error,N):
         self.freq = freq
         self.x = x
         self.y = y
         self.Observed = Observed
         self.error = error
-        self.obs_frac = obs_frac
         self.N = N
       
     def basis_N(self,params):
@@ -81,19 +76,43 @@ class FitBeam:
                 temp=np.real((nc*(np.exp(1j*m*thetam))/((1j**m)*2*np.pi) *(-1)**((n-m)/2) *Bes))
                 self.Basis[count]=temp.flatten()
                 count+=1
-        return self.Basis;
+    
+    def g_chisq(self,Observed,Expected,error,k):
+        '''Routine to compute chisq for Gaussian fit'''
+        Expected = twoD_Gaussian(self.x,self.y,self.init_gparams)
+        Expected = Expected.flatten()
+        Observed = Observed.flatten()
+        chi = np.vdot((Observed - Expected)/(error),(Observed - Expected)/(error))/(len(Observed) -k-2)
+        chi2=np.abs(chi)
+        return (chi2);
 
-    def optimize_ZT(self,init_params):
+    def zt_chisq(self,Observed,Expected,error,k):
+        '''Routine to compute chisq for Zernike fit'''
+        Expected = twoD_Gaussian(self.x,self.y,self.init_ztparams,0,0,0,0)
+        Expected = Expected.flatten()
+        Observed = Observed.flatten()
+        chi = np.vdot((Observed - Expected)/(error),(Observed - Expected)/(error))/(len(Observed) -k-2)
+        chi2=np.abs(chi)
+        return (chi2);
+
+    def optimize_Gauss(self,init_gparams):
+        '''Routine to optimize Gaussian fit by minimizing chisq'''
+        self.init_gparams = init_gparams
+        self.gopt = minimize(self.g_chisq, self.init_gparams, args=(self.Observed,self.Expected,self.error,len(self.init_gparams)), method='Nelder-Mead', options={'xatol': 1e-8, 'disp': True})
+        self.sigx_gopt,self.sigy_gopt = self.gopt.x       
+        return self.sigx_gopt,self.sigy_gopt,self.coef,self.Expected,self.opt.fun;
+
+    def optimize_ZT(self,init_ztparams):
         '''Routine to optimize Zernike fit by minimizing chisq'''
-        self.init_params = init_params
+        self.ztinit_params = init_ztparams
         w = 1/self.error
         Bw = self.Basis*np.sqrt(w[:,np.newaxis])
         Cw = self.Observed*np.sqrt(w)
         self.coef,_,_,_ = sp.linalg.lstsq(Bw,Cw)
         self.Expected = np.dot(self.Basis.T,self.coef).reshape(self.Observed.shape)
-        self.opt = minimize(chisq, self.init_params, args=(self.Observed,self.Expected,self.error,len(self.coef)), method='Nelder-Mead', options={'xatol': 1e-8, 'disp': True})
-        self.sigx_opt,self.sigy_opt = self.opt.x         
-        return self.sigx_opt,self.sigy_opt,self.coef,self.Expected,self.opt.fun;
+        self.ztopt = minimize(self.zt_chisq, self.init_ztparams, args=(self.Observed,self.Expected,self.error,len(self.coef)), method='Nelder-Mead', options={'xatol': 1e-8, 'disp': True})
+        self.sigx_ztopt,self.sigy_ztopt = self.ztopt.x         
+        return self.sigx_ztopt,self.sigy_ztopt,self.coef,self.Expected,self.ztopt.fun;
 
 
 class GenBeam:
