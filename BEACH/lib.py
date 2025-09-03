@@ -43,63 +43,87 @@ def twoD_Gaussian(x,y,amp,sigx,sigy,xo, yo, tilt, offset):
     
     return offset + amp*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo) + c*((y-yo)**2)));
 
-def basis_fit_N(params,x,y,N):
-    '''Routine to generate Zernike Transforms (basis) from Bessel function of first kind to fit a data set'''
-    sigx,sigy = params
-    x,y = np.meshgrid(x/sigx,y/sigy)
-    r = np.hypot(x,y)
-    r[r==0] = 1e-10
-    #rho = rho/sig
-    theta = np.arctan2(y,x)
+def chisq(Observed,Expected,error,k):
+    Expected = Expected.flatten()
+    Observed = Observed.flatten()
+    chi = np.vdot((Observed - Expected)/(error),(Observed - Expected)/(error))/(len(Observed) -k-2)
+    chi2=np.abs(chi)
+    return (chi2);
 
-    z1 = np.zeros((N,len(r.flatten())),dtype="float64")
-    count = 0
-    for j in range(0,N):
-        n,m = NollToQuantum(j)
-        if n>=0 and n>=abs(m) and (n-abs(m))%2==0:
-            Bes=(jn(n+1,r))/r
-            nc = (((2*n+1)*(2*n+3)*(2*n+5))/(-1)**n)**0.5
-            temp=np.real((nc*(np.exp(1j*m*theta))/((1j**m)*2*np.pi) *(-1)**((n-m)/2) *Bes))
-            z1[count]=temp.flatten()
-            count+=1
-    return z1;
 
-def basis_gen_j(params,x,y,coef):
-    '''Routine to generate Zernike Transforms (basis) from Bessel function of first kind to generate beam from coefficients'''
-    sigx,sigy = params
-    x,y = np.meshgrid(x/sigx,y/sigy)
-    r = np.hypot(x,y)
-    r[r==0] = 1e-10
-    theta = np.arctan2(y,x)
-    z1 = np.zeros((len(coef),len(r.flatten())),dtype="float64")
-    count = 0
-    for j in coef[:,0]:
-        n,m = NollToQuantum(j)
-        if n>=0 and n>=abs(m) and (n-abs(m))%2==0:
-            Bes=(jn(n+1,r))/r
-            nc = (((2*n+1)*(2*n+3)*(2*n+5))/(-1)**n)**0.5
-            temp=np.real((nc*(np.exp(1j*m*theta))/((1j**m)*2*np.pi) *(-1)**((n-m)/2) *Bes))
-            z1[count]=temp.flatten()
-            count+=1
+
+class FitBeam:
+    def __init__(self,freq,x,y,Observed,error,obs_frac,N):
+        self.freq = freq
+        self.x = x
+        self.y = y
+        self.Observed = Observed
+        self.error = error
+        self.obs_frac = obs_frac
+        self.N = N
+      
+    def basis_N(self,params):
+        '''Routine to generate Zernike Transforms (basis) from Bessel function of first kind to fit a data set'''
+        self.sigx,self.sigy = params
+        xm,ym = np.meshgrid(self.x/self.sigx,self.y/self.sigy)
+        rm = np.hypot(xm,ym)
+        rm[rm==0] = 1e-10
+        #rho = rho/sig
+        thetam = np.arctan2(ym,xm)
+
+        self.Basis = np.zeros((self.N,len(rm.flatten())),dtype="float64")
+        count = 0
+        for j in range(0,self.N):
+            n,m = NollToQuantum(j)
+            if n>=0 and n>=abs(m) and (n-abs(m))%2==0:
+                Bes=(jn(n+1,rm))/rm
+                nc = (((2*n+1)*(2*n+3)*(2*n+5))/(-1)**n)**0.5
+                temp=np.real((nc*(np.exp(1j*m*thetam))/((1j**m)*2*np.pi) *(-1)**((n-m)/2) *Bes))
+                self.Basis[count]=temp.flatten()
+                count+=1
+        return self.Basis;
+
+    def optimize_ZT(self,init_params):
+        '''Routine to optimize Zernike fit by minimizing chisq'''
+        self.init_params = init_params
+        w = 1/self.error
+        Bw = self.Basis*np.sqrt(w[:,np.newaxis])
+        Cw = self.Observed*np.sqrt(w)
+        self.coef,_,_,_ = sp.linalg.lstsq(Bw,Cw)
+        self.Expected = np.dot(self.Basis.T,self.coef).reshape(self.Observed.shape)
+        self.opt = minimize(chisq, self.init_params, args=(self.Observed,self.Expected,self.error,len(self.coef)), method='Nelder-Mead', options={'xatol': 1e-8, 'disp': True})
+        self.sigx_opt,self.sigy_opt = self.opt.x         
+        return self.sigx_opt,self.sigy_opt,self.coef,self.Expected,self.opt.fun;
+
+
+class GenBeam:
+    def __init__(self,freq,x,y,coef):
+        self.freq = freq
+        self.x = x
+        self.y = y
+        self.coef = coef
         
-    return z1;
+    def basis_j(self,params):
+        '''Routine to generate Zernike Transforms (basis) from Bessel function of first kind to generate beam from coefficients'''
+        self.sigx,self.sigy = params
+        xm,ym = np.meshgrid(self.x/self.sigx,self.y/self.sigy)
+        rm = np.hypot(xm,ym)
+        rm[rm==0] = 1e-10
+        thetam = np.arctan2(ym,xm)
+
+        self.Basis = np.zeros((self.coef,len(rm.flatten())),dtype="float64")
+        count = 0
+        for j in range(0,self.N):
+            n,m = NollToQuantum(j)
+            if n>=0 and n>=abs(m) and (n-abs(m))%2==0:
+                Bes=(jn(n+1,rm))/rm
+                nc = (((2*n+1)*(2*n+3)*(2*n+5))/(-1)**n)**0.5
+                temp=np.real((nc*(np.exp(1j*m*thetam))/((1j**m)*2*np.pi) *(-1)**((n-m)/2) *Bes))
+                self.Basis[count]=temp.flatten()
+                count+=1
+        return self.Basis;
 
 
-def chisq_ZT(Basis,Observed,error,params,N,obs_frac):
-    sigx,sigy = params
-    Basis = basis_fit_N(params,x,y,N)
-    w = 1/((obs_frac*Observed)+10**-5)
-    Bw = Basis*np.sqrt(w[:,np.newaxis])
-    Cw = Observed*np.sqrt(w)
-    coef,_,_,_ = sp.linalg.lstsq(Bw,Cw)
-    Expected = np.dot(Basis,coef)
-    chi = np.vdot((Observed - Expected)/(error),(Observed - Expected)/(error))/(len(Observed) -len(coef)-2)
-    chi2=np.abs(chi)
-    return (chi2);
- 
-def chisq_Gauss(params,x,y,Observed,error):
-    amp,sigx,sigy,xo,yo,tilt,offset = params
-    Expected = twoD_Gaussian(x,y,amp,sigx,sigy,xo,yo,tilt,offset).flatten()
-    chi = np.vdot((Observed - Expected)/(error),(Observed - Expected)/(error))/(len(Observed) -9)
-    chi2=np.abs(chi)
-    return (chi2);
+
+
+
