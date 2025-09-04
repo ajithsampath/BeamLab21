@@ -54,7 +54,8 @@ class FitBeam:
         self.x = x
         self.y = y
         self.Observed = Observed
-        self.error = error
+        self.gerror = np.ones(Observed.shape)
+        self.zterror = error
         self.N = N
       
     def basis_N(self,params):
@@ -77,12 +78,12 @@ class FitBeam:
                 self.Basis[count]=temp.flatten()
                 count+=1
     
-    def g_chisq(self,Observed,Expected,error,k):
+    def g_chisq(self,params):
         '''Routine to compute chisq for Gaussian fit'''
-        Expected = twoD_Gaussian(self.x,self.y,self.init_gparams)
-        Expected = Expected.flatten()
-        Observed = Observed.flatten()
-        chi = np.vdot((Observed - Expected)/(error),(Observed - Expected)/(error))/(len(Observed) -k-2)
+        self.gExpected = twoD_Gaussian(self.x,self.y,params)
+        Expected = self.gExpected.flatten()
+        Observed = self.Observed.flatten()
+        chi = np.vdot((Observed - Expected)/(self.gerror),(Observed - Expected)/(self.gerror))/(len(Observed) -k-2)
         chi2=np.abs(chi)
         return (chi2);
 
@@ -97,7 +98,7 @@ class FitBeam:
         Expected = self.Expected.flatten()
         Observed = self.Observed.flatten()
         k=len(self.coef)
-        chi = np.vdot((Observed - Expected)/(self.error),(Observed - Expected)/(self.error))/(len(Observed) -k-2)
+        chi = np.vdot((Observed - Expected)/(self.zterror),(Observed - Expected)/(self.zterror))/(len(Observed) -k-2)
         chi2=np.abs(chi)
         return (chi2);
 
@@ -106,18 +107,19 @@ class FitBeam:
         self.init_gparams = init_gparams
         self.gopt = minimize(self.g_chisq, self.init_gparams, args=(self.Observed,self.Expected,self.error,len(self.init_gparams)), method='Nelder-Mead', options={'xatol': 1e-8, 'disp': True})
         self.sigx_gopt,self.sigy_gopt = self.gopt.x       
-        return self.sigx_gopt,self.sigy_gopt,self.coef,self.Expected,self.opt.fun;
+        return self.sigx_gopt,self.sigy_gopt,self.gExpected,self.opt.fun;
 
     def optimize_ZT(self,init_ztparams,method='Nelder-Mead'):
         '''Routine to optimize Zernike fit by minimizing chisq'''
         self.init_ztparams = init_ztparams
         self.ztopt = minimize(self.zt_chisq, self.init_ztparams, method=method, options={'xatol': 1e-8, 'disp': True})
         self.sigx_ztopt,self.sigy_ztopt = self.ztopt.x         
-        return self.sigx_ztopt,self.sigy_ztopt,self.coef,self.Expected,self.ztopt.fun;
+        return self.sigx_ztopt,self.sigy_ztopt,self.coef,self.ztExpected,self.ztopt.fun;
 
 
 class GenBeam:
     def __init__(self,freq,x,y,coef):
+        '''Initializer to get all the parameters'''
         self.freq = freq
         self.x = x
         self.y = y
