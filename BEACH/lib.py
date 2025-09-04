@@ -86,12 +86,18 @@ class FitBeam:
         chi2=np.abs(chi)
         return (chi2);
 
-    def zt_chisq(self,Observed,Expected,error,k):
+    def zt_chisq(self,params):
         '''Routine to compute chisq for Zernike fit'''
-        Expected = twoD_Gaussian(self.x,self.y,self.init_ztparams,0,0,0,0)
-        Expected = Expected.flatten()
-        Observed = Observed.flatten()
-        chi = np.vdot((Observed - Expected)/(error),(Observed - Expected)/(error))/(len(Observed) -k-2)
+        self.basis_N(params)
+        w = 1/self.error
+        Bw = self.Basis*np.sqrt(w[:,np.newaxis])
+        Cw = self.Observed*np.sqrt(w)
+        self.coef,_,_,_ = sp.linalg.lstsq(Bw,Cw)
+        self.Expected = np.dot(self.Basis.T,self.coef).reshape(self.Observed.shape)
+        Expected = self.Expected.flatten()
+        Observed = self.Observed.flatten()
+        k=len(self.coef)
+        chi = np.vdot((Observed - Expected)/(self.error),(Observed - Expected)/(self.error))/(len(Observed) -k-2)
         chi2=np.abs(chi)
         return (chi2);
 
@@ -102,15 +108,10 @@ class FitBeam:
         self.sigx_gopt,self.sigy_gopt = self.gopt.x       
         return self.sigx_gopt,self.sigy_gopt,self.coef,self.Expected,self.opt.fun;
 
-    def optimize_ZT(self,init_ztparams):
+    def optimize_ZT(self,init_ztparams,method='Nelder-Mead'):
         '''Routine to optimize Zernike fit by minimizing chisq'''
-        self.ztinit_params = init_ztparams
-        w = 1/self.error
-        Bw = self.Basis*np.sqrt(w[:,np.newaxis])
-        Cw = self.Observed*np.sqrt(w)
-        self.coef,_,_,_ = sp.linalg.lstsq(Bw,Cw)
-        self.Expected = np.dot(self.Basis.T,self.coef).reshape(self.Observed.shape)
-        self.ztopt = minimize(self.zt_chisq, self.init_ztparams, args=(self.Observed,self.Expected,self.error,len(self.coef)), method='Nelder-Mead', options={'xatol': 1e-8, 'disp': True})
+        self.init_ztparams = init_ztparams
+        self.ztopt = minimize(self.zt_chisq, self.init_ztparams, method=method, options={'xatol': 1e-8, 'disp': True})
         self.sigx_ztopt,self.sigy_ztopt = self.ztopt.x         
         return self.sigx_ztopt,self.sigy_ztopt,self.coef,self.Expected,self.ztopt.fun;
 
