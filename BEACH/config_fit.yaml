@@ -2,22 +2,27 @@
 
   # Telescope parameters
   Telescope_name: "Hirax"  # "Hirax" is the only supported option currently. This sets the aperture diameter and frequency range.
-  frequencyrange: [400e6, 800e6]  # frequency range in Hz
-  nchan: 16                # number of frequency channels
+  frequency: 400  # frequency channel to fit in MHz
   aperture_diameter: 6.0   # aperture diameter in meters, default for Hirax is 6m
 
   # Data parameters
-  datafile: "testbeam.fits"  # path to the input data file (FITS, HDF5, NPY, NPZ, or TXT format)
-  x_range: [-50, 50]  # x range in arcminutes
-  y_range: [-50, 50]  # y range in arcminutes
-  npix: 100              # number of pixels along each axis
-  error: 0.0               # error level to add to the data, default is 0.0
+  datafile: "beams_fiducial_pol.npz"  # path to the input data file (FITS, HDF5, NPY, NPZ, or TXT format)
+  normalize_data: True     # whether to normalize the data before fitting
+
+  gaussian_error_type: "uniform"      # type of error to use in Gaussian fitting, options are "uniform" or "proportional"
+  init_gparams: [1.0, 1.0, 1.0,0,0,0]  # Initial guess for Gaussian fit parameters [Amplitude, sigx, sigy, xoffset, yoffset, tilt]
+  gminimize_method: "Nelder-Mead"  # minimization method for Gaussian fit, options are "L-BFGS-B", "Nelder-Mead", "Powell", etc.
+  gmaxiter: 100           # maximum number of iterations for the Gaussian minimization algorithm
+  gtol: 1e-6               # tolerance for termination of the Gaussian minimization algorithm
+  gverbose: False           # whether to print detailed logs during Gaussian fitting
+
+  zernike_error_type: "proportional"       # type of error to use in Zernike fitting, options are "uniform", "proportional", or "custom"
   N: 15                    # number of Zernike polynomials to fit, default is 15
-  minimize_method: "L-BFGS-B"  # minimization method, options are "L-BFGS-B", "Nelder-Mead", "Powell", etc.
-  maxiter: 1000           # maximum number of iterations for the minimization algorithm
-  tol: 1e-6               # tolerance for termination of the minimization algorithm
-  random_seed: 42         # random seed for reproducibility
-  verbose: True           # whether to print detailed logs during fitting
+  ztminimize_method: "Nelder-Mead"  # minimization method, options are "L-BFGS-B", "Nelder-Mead", "Powell", etc.
+  ztmaxiter: 100           # maximum number of iterations for the Zernike minimization algorithm
+  zttol: 1e-6               # tolerance for termination of the Zernike minimization algorithm
+  zverbose: False           # whether to print detailed logs during fitting
+
   plot_results: True      # whether to plot the fitting results
   save_plots: True        # whether to save the plots
   plot_format: "png"      # format for saving plots, options are "png", "pdf", etc.
@@ -25,8 +30,9 @@
 
 
   # Output parameters
+  save_outputs: True        # whether to save the fitting results to a file
   output_filename: "testbeam"  # output file name
-  output_format: "hdf5"      # output file format, options are "hdf5" or "npy"
+  output_format: ".npy"      # output file format, options are "hdf5" or "npy"
   save_intermediate: True     # whether to save intermediate results
 
   # Gaussian model parameters

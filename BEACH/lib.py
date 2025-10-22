@@ -33,7 +33,7 @@ def QuantumToNoll(n,m):
     return j;
     
 def twoD_Gaussian(x,y,params):
-    amp,sigx,sigy,xo, yo, tilt, = params
+    amp,sigx,sigy,xo, yo, tilt = params
     xo = float(xo)
     yo = float(yo)
     tilt = np.radians(tilt)
@@ -48,15 +48,12 @@ def twoD_Gaussian(x,y,params):
 #Gaussian Fit class
 
 class GaussianFit:
-    def __init__(self,freq,x,y,error):
-        self.freq = freq
-        self.x = x
-        self.y = y
-        self.error = error
-
-    def load_beam(self,datafile):
+    def __init__(self,datafile,freq,error_type='uniform'):
         '''Routine to load data from fits/hdf5/csv file'''
-        
+        self.load_beam(datafile,error_type)
+        self.freq = freq
+
+    def load_beam(self,datafile,error_type='uniform'):
         if datafile.endswith('.fits'):
             hdul = fits.open(datafile)
             self.Observed = hdul[0].data
@@ -64,7 +61,19 @@ class GaussianFit:
         elif datafile.endswith('.npy'):
             self.Observed = np.load(datafile)
         elif datafile.endswith('.npz'):
-            self.Observed = np.load(datafile)['arr_0']
+            self.Observed = np.load(datafile)['fiducial']
+            self.x = np.load(datafile)['x']
+            self.y = np.load(datafile)['y']
+            self.freq_arr = np.load(datafile)['freq_arr']
+            self.nchan = self.freq_arr.shape[0]
+            if datafile.keys().count('error')>0:
+                self.error = np.load(datafile)['error']
+            else:
+                if error_type=='uniform':
+                    self.error = np.ones_like(self.Observed)
+                else:
+                    raise ValueError("Error array not found in .npz file. Please provide error array or set error_type to 'uniform'.")
+
         elif datafile.endswith('.txt'):           
             self.Observed = np.loadtxt(datafile)
         elif datafile.endswith('.h5') or datafile.endswith('.hdf5'):
@@ -87,47 +96,39 @@ class GaussianFit:
         chi2=np.abs(chi)
         return (chi2);
 
-    def optimize_Gauss(self,init_gparams):
+    def optimize_Gauss(self,init_gparams,minimize_method='Nelder-Mead',xtol=1e-8):
         '''Routine to optimize Gaussian fit by minimizing chisq'''
         self.init_gparams = init_gparams
-        self.gopt = minimize(self.g_chisq, self.init_gparams, args=(self.Observed,self.Expected,self.error,len(self.init_gparams)), method='Nelder-Mead', options={'xatol': 1e-8, 'disp': True})
+        self.gopt = minimize(self.g_chisq, self.init_gparams, method=minimize_method, options={'xatol': xtol, 'disp': True})
         self.sigx_gopt,self.sigy_gopt = self.gopt.x       
-        return self.sigx_gopt,self.sigy_gopt,self.gExpected,self.gopt.fun;
+        return self.x,self.y,self.freq_arr,self.freq,self.sigx_gopt,self.sigy_gopt,self.gExpected,self.Observed,self.gopt.fun;
 
 
 #Zernike Transform Fit class
 
 class ZernikeFit:
-    def __init__(self,freq,x,y,error,N):
-        self.freq = freq
+    def __init__(self,x,y,xo,yo,freq_arr,data,N,freq = 400,error_type='proportional',normalize_data=True):
         self.x = x
         self.y = y
-        self.error = error
+        self.xo = xo
+        self.yo = yo
+        self.freq_arr = freq_arr
+        self.freq = freq
+        self.Observed = data[int((freq-400)/50)]
+        if normalize_data:
+            self.Observed = self.Observed/np.max(self.Observed)
+            print("Data normalized to maximum value.")
+        else:
+            print("Data not normalized.")
+            pass
+        if error_type=='proportional':
+            self.error = np.abs(self.Observed)*0.05 + 1e-3
+        elif error_type=='uniform':
+            self.error = np.ones_like(self.Observed)
+        else:
+            raise ValueError("Unsupported error type. Please use 'proportional' or 'uniform'.")
         self.N = N
 
-    def load_beam(self,datafile):
-        '''Routine to load data from fits/hdf5/csv file'''
-        
-        if datafile.endswith('.fits'):
-            hdul = fits.open(datafile)
-            self.Observed = hdul[0].data
-            hdul.close()
-        elif datafile.endswith('.npy'):
-            self.Observed = np.load(datafile)
-        elif datafile.endswith('.npz'):
-            self.Observed = np.load(datafile)['arr_0']
-        elif datafile.endswith('.txt'):           
-            self.Observed = np.loadtxt(datafile)
-        elif datafile.endswith('.h5') or datafile.endswith('.hdf5'):
-            with h5py.File(datafile, 'r') as f:
-                self.Observed = f['dataset_name'][:]  # replace 'dataset_name' with actual dataset name
-        elif datafile.endswith('.csv'):
-            df = pd.read_csv(datafile)
-            self.Observed = df.values  # assuming the entire CSV is the data
-        else:
-            raise ValueError("Unsupported file format. Please use .fits, .h5/.hdf5, or .csv files.")
-        return self.Observed;
-      
     def basis_N(self,params):
         '''Routine to generate Zernike Transforms (basis) from Bessel function of first kind to fit a data set'''
         self.sigx,self.sigy = params
@@ -162,10 +163,10 @@ class ZernikeFit:
         chi2=np.abs(chi)
         return (chi2);
 
-    def optimize_ZT(self,init_ztparams,method='Nelder-Mead'):
+    def optimize_ZT(self,init_ztparams,method='Nelder-Mead',xtol=1e-8,maxiter=100):
         '''Routine to optimize Zernike fit by minimizing chisq'''
         self.init_ztparams = init_ztparams
-        self.ztopt = minimize(self.zt_chisq, self.init_ztparams, method=method, options={'xatol': 1e-8, 'disp': True})
+        self.ztopt = minimize(self.zt_chisq, self.init_ztparams, method=method, options={'xatol': xtol, 'disp': True},maxiter=maxiter)
         self.sigx_ztopt,self.sigy_ztopt = self.ztopt.x         
         return self.sigx_ztopt,self.sigy_ztopt,self.coef,self.Expected,self.ztopt.fun;
 
