@@ -6,7 +6,7 @@
   aperture_diameter: 6.0   # aperture diameter in meters, default for Hirax is 6m
 
   # Data parameters
-  datafile: "beams_fiducial_pol.npz"  # path to the input data file (FITS, HDF5, NPY, NPZ, or TXT format)
+  datafile: "beams_cart_perturbed_fiducial.npz"  # path to the input data file (FITS, HDF5, NPY, NPZ, or TXT format)
   normalize_data: True     # whether to normalize the data before fitting
 
   gaussian_error_type: "uniform"      # type of error to use in Gaussian fitting, options are "uniform" or "proportional"

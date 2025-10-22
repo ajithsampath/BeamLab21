@@ -17,7 +17,7 @@ plot_results = config['plot_results']
 save_plots = config['save_plots']
 plot_format = config['plot_format']
 plot_directory = config['plot_directory']
-init_gparams = config['init_gparams']  # Initial guess for Gaussian sigmas in arcminutes
+init_gparams = np.array(config['init_gparams'])  # Initial guess for Gaussian sigmas in arcminutes
 
 print("Fitting data from file:", datafile)
 print("Telescope:", telescope_name)
@@ -28,16 +28,20 @@ gfit = GaussianFit(datafile,freq,error_type=config['gaussian_error_type'])
 print("Data loaded. Shape of observed data:", gfit.Observed.shape)
 #Optimize Gaussian fit
 print("Starting Gaussian fit optimization...")
-x,y,freq_arr,freq,sigx_gopt,sigy_gopt,gExpected,data,_= gfit.optimize_Gauss([init_gparams],minimize_method = config['gminimize_method'],xtol=config['gtol'],maxiter=config['gmaxiter'])
+
+x,y,freq_arr,freq,sigx_gopt,sigy_gopt,gExpected,data,_= gfit.optimize_Gauss(init_gparams,minimize_method = config['gminimize_method'],xtol=config['gtol'],maxiter=config['gmaxiter'])
+print("Gaussian fit completed. Optimized sigx:", sigx_gopt, "sigy:", sigy_gopt)
 
 #Generate Zernike basis
+print("Generating Zernike basis...")
 ztfit = ZernikeFit(x,y,freq_arr,freq,data,config['N'],error_type=config['zernike_error_type'],normalize_data=config['normalize_data'])
 
 #Fit data to Zernike basis
 init_ztparams = [sigx_gopt,sigy_gopt] # Use optimized Gaussian sigmas as initial guess for Zernike fit
 
+print("Starting Zernike fit optimization...")
 fit_params, model_beam = ztfit.optimize_ZT(init_ztparams,minimize_method=config['ztminimize_method'],xtol=config['zttol'],maxiter=config['ztmaxiter'])
-
+print("Zernike fit completed. Fit parameters:", fit_params)
 
 
 #Save fit parameters to csv file

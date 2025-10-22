@@ -61,12 +61,12 @@ class GaussianFit:
         elif datafile.endswith('.npy'):
             self.Observed = np.load(datafile)
         elif datafile.endswith('.npz'):
-            self.Observed = np.load(datafile)['fiducial']
+            self.Observed = np.load(datafile)['beam2']
             self.x = np.load(datafile)['x']
             self.y = np.load(datafile)['y']
-            self.freq_arr = np.load(datafile)['freq_arr']
+            self.freq_arr = np.load(datafile)['freq']
             self.nchan = self.freq_arr.shape[0]
-            if datafile.keys().count('error')>0:
+            if np.load(datafile).keys().__contains__('error'):
                 self.error = np.load(datafile)['error']
             else:
                 if error_type=='uniform':
@@ -96,7 +96,7 @@ class GaussianFit:
         chi2=np.abs(chi)
         return (chi2);
 
-    def optimize_Gauss(self,init_gparams,minimize_method='Nelder-Mead',xtol=1e-8):
+    def optimize_Gauss(self,init_gparams,minimize_method='Nelder-Mead',xtol=1e-8,maxiter=100):
         '''Routine to optimize Gaussian fit by minimizing chisq'''
         self.init_gparams = init_gparams
         self.gopt = minimize(self.g_chisq, self.init_gparams, method=minimize_method, options={'xatol': xtol, 'disp': True})
