@@ -45,18 +45,88 @@ def twoD_Gaussian(x,y,params):
     return amp*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo) + c*((y-yo)**2)));
 
 
+#Gaussian Fit class
 
-
-
-class FitBeam:
-    def __init__(self,freq,x,y,Observed,error,N):
+class GaussianFit:
+    def __init__(self,freq,x,y,error):
         self.freq = freq
         self.x = x
         self.y = y
-        self.Observed = Observed
-        self.gerror = np.ones(Observed.shape)
-        self.zterror = error
+        self.error = error
+
+    def load_beam(self,datafile):
+        '''Routine to load data from fits/hdf5/csv file'''
+        
+        if datafile.endswith('.fits'):
+            hdul = fits.open(datafile)
+            self.Observed = hdul[0].data
+            hdul.close()
+        elif datafile.endswith('.npy'):
+            self.Observed = np.load(datafile)
+        elif datafile.endswith('.npz'):
+            self.Observed = np.load(datafile)['arr_0']
+        elif datafile.endswith('.txt'):           
+            self.Observed = np.loadtxt(datafile)
+        elif datafile.endswith('.h5') or datafile.endswith('.hdf5'):
+            with h5py.File(datafile, 'r') as f:
+                self.Observed = f['dataset_name'][:]  # replace 'dataset_name' with actual dataset name
+        elif datafile.endswith('.csv'):
+            df = pd.read_csv(datafile)
+            self.Observed = df.values  # assuming the entire CSV is the data
+        else:
+            raise ValueError("Unsupported file format. Please use .fits, .h5/.hdf5, or .csv files.")
+        return self.Observed;
+      
+    def g_chisq(self,params):
+        '''Routine to compute chisq for Gaussian fit'''
+        self.gExpected = twoD_Gaussian(self.x,self.y,params)
+        Expected = self.gExpected.flatten()
+        Observed = self.Observed.flatten()
+        k=len(params)
+        chi = np.vdot((Observed - Expected)/(self.error),(Observed - Expected)/(self.error))/(len(Observed)-k-2)
+        chi2=np.abs(chi)
+        return (chi2);
+
+    def optimize_Gauss(self,init_gparams):
+        '''Routine to optimize Gaussian fit by minimizing chisq'''
+        self.init_gparams = init_gparams
+        self.gopt = minimize(self.g_chisq, self.init_gparams, args=(self.Observed,self.Expected,self.error,len(self.init_gparams)), method='Nelder-Mead', options={'xatol': 1e-8, 'disp': True})
+        self.sigx_gopt,self.sigy_gopt = self.gopt.x       
+        return self.sigx_gopt,self.sigy_gopt,self.gExpected,self.gopt.fun;
+
+
+#Zernike Transform Fit class
+
+class ZernikeFit:
+    def __init__(self,freq,x,y,error,N):
+        self.freq = freq
+        self.x = x
+        self.y = y
+        self.error = error
         self.N = N
+
+    def load_beam(self,datafile):
+        '''Routine to load data from fits/hdf5/csv file'''
+        
+        if datafile.endswith('.fits'):
+            hdul = fits.open(datafile)
+            self.Observed = hdul[0].data
+            hdul.close()
+        elif datafile.endswith('.npy'):
+            self.Observed = np.load(datafile)
+        elif datafile.endswith('.npz'):
+            self.Observed = np.load(datafile)['arr_0']
+        elif datafile.endswith('.txt'):           
+            self.Observed = np.loadtxt(datafile)
+        elif datafile.endswith('.h5') or datafile.endswith('.hdf5'):
+            with h5py.File(datafile, 'r') as f:
+                self.Observed = f['dataset_name'][:]  # replace 'dataset_name' with actual dataset name
+        elif datafile.endswith('.csv'):
+            df = pd.read_csv(datafile)
+            self.Observed = df.values  # assuming the entire CSV is the data
+        else:
+            raise ValueError("Unsupported file format. Please use .fits, .h5/.hdf5, or .csv files.")
+        return self.Observed;
       
     def basis_N(self,params):
         '''Routine to generate Zernike Transforms (basis) from Bessel function of first kind to fit a data set'''
@@ -76,17 +146,7 @@ class FitBeam:
                 nc = (((2*n+1)*(2*n+3)*(2*n+5))/(-1)**n)**0.5
                 temp=np.real((nc*(np.exp(1j*m*thetam))/((1j**m)*2*np.pi) *(-1)**((n-m)/2) *Bes))
                 self.Basis[count]=temp.flatten()
-                count+=1
-    
-    def g_chisq(self,params):
-        '''Routine to compute chisq for Gaussian fit'''
-        self.gExpected = twoD_Gaussian(self.x,self.y,params)
-        Expected = self.gExpected.flatten()
-        Observed = self.Observed.flatten()
-        chi = np.vdot((Observed - Expected)/(self.gerror),(Observed - Expected)/(self.gerror))/(len(Observed) -k-2)
-        chi2=np.abs(chi)
-        return (chi2);
-
+                count+=1            
     def zt_chisq(self,params):
         '''Routine to compute chisq for Zernike fit'''
         self.basis_N(params)
@@ -98,32 +158,48 @@ class FitBeam:
         Expected = self.Expected.flatten()
         Observed = self.Observed.flatten()
         k=len(self.coef)
-        chi = np.vdot((Observed - Expected)/(self.zterror),(Observed - Expected)/(self.zterror))/(len(Observed) -k-2)
+        chi = np.vdot((Observed - Expected)/(self.error),(Observed - Expected)/(self.error))/(len(Observed) -k-2)
         chi2=np.abs(chi)
         return (chi2);
-
-    def optimize_Gauss(self,init_gparams):
-        '''Routine to optimize Gaussian fit by minimizing chisq'''
-        self.init_gparams = init_gparams
-        self.gopt = minimize(self.g_chisq, self.init_gparams, args=(self.Observed,self.Expected,self.error,len(self.init_gparams)), method='Nelder-Mead', options={'xatol': 1e-8, 'disp': True})
-        self.sigx_gopt,self.sigy_gopt = self.gopt.x       
-        return self.sigx_gopt,self.sigy_gopt,self.gExpected,self.opt.fun;
 
     def optimize_ZT(self,init_ztparams,method='Nelder-Mead'):
         '''Routine to optimize Zernike fit by minimizing chisq'''
         self.init_ztparams = init_ztparams
         self.ztopt = minimize(self.zt_chisq, self.init_ztparams, method=method, options={'xatol': 1e-8, 'disp': True})
         self.sigx_ztopt,self.sigy_ztopt = self.ztopt.x         
-        return self.sigx_ztopt,self.sigy_ztopt,self.coef,self.ztExpected,self.ztopt.fun;
+        return self.sigx_ztopt,self.sigy_ztopt,self.coef,self.Expected,self.ztopt.fun;
 
+
+
+
+
+
+
+
+
+
+
+
+#Generative Beam class
 
 class GenBeam:
-    def __init__(self,freq,x,y,coef):
+    def __init__(self,freq,x,y):
         '''Initializer to get all the parameters'''
         self.freq = freq
         self.x = x
-        self.y = y
-        self.coef = coef
+        self.y = y    
+    def load_coef(self,coeffile):
+        '''Routine to load coefficients from csv file'''
+        if coeffile.endswith('.csv'):
+            df = pd.read_csv(coeffile)
+            self.coef = df['Coefficient'].values  # assuming the entire CSV is the data
+        elif coeffile.endswith('.npy'):
+            self.coef = np.load(coeffile)
+        elif coeffile.endswith('.npz'):
+            self.coef = np.load(coeffile)['arr_0']
+        else:
+            raise ValueError("Unsupported file format. Please use .csv or .npy/.npz files.")
+        return self.coef; 
         
     def basis_j(self,params):
         '''Routine to generate Zernike Transforms (basis) from Bessel function of first kind to generate beam from coefficients'''
