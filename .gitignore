@@ -1,8 +1,8 @@
 #Python project .gitignore
 
 # Ignore some big data files
-.npz
-.h5
+*.npz
+*.h5
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -31,11 +31,11 @@ dist/
 *.egg-info/
 
 # OS-specific files
-.DS_Store
-Thumbs.db
+*.DS_Store
+*Thumbs.db
 
 # Ignore Jupyter notebook checkpoints
-.ipynb_checkpoints/
+*.ipynb_checkpoints/
 
 # Ignore secrets / config files
 *.env
