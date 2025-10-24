@@ -50,8 +50,9 @@ def twoD_Gaussian(x,y,params):
 class GaussianFit:
     def __init__(self,datafile,freq,error_type='uniform'):
         '''Routine to load data from fits/hdf5/csv file'''
-        self.load_beam(datafile,error_type)
         self.freq = freq
+        self.load_beam(datafile,error_type)
+
 
     def load_beam(self,datafile,error_type='uniform'):
         if datafile.endswith('.fits'):
@@ -61,7 +62,7 @@ class GaussianFit:
         elif datafile.endswith('.npy'):
             self.Observed = np.load(datafile)
         elif datafile.endswith('.npz'):
-            self.Observed = np.load(datafile)['beam2']
+            self.Observed = np.load(datafile)['fiducial'][int((self.freq-400)/50)]
             self.x = np.load(datafile)['x']
             self.y = np.load(datafile)['y']
             self.freq_arr = np.load(datafile)['freq']
@@ -92,29 +93,32 @@ class GaussianFit:
         Expected = self.gExpected.flatten()
         Observed = self.Observed.flatten()
         k=len(params)
-        chi = np.vdot((Observed - Expected)/(self.error),(Observed - Expected)/(self.error))/(len(Observed)-k-2)
+        chi = np.vdot((Observed - Expected)/(self.error.flatten()),(Observed - Expected)/(self.error.flatten()))/(len(Observed)-k-2)
         chi2=np.abs(chi)
+        print("Current Gaussian parameters:", params, "Chisq:", chi2)
         return (chi2);
 
-    def optimize_Gauss(self,init_gparams,minimize_method='Nelder-Mead',xtol=1e-8,maxiter=100):
+    def optimize_Gauss(self,init_gparams,minimize_method = 'Nelder-Mead',xtol=1e-8,maxiter=100,verbose=True):
         '''Routine to optimize Gaussian fit by minimizing chisq'''
         self.init_gparams = init_gparams
-        self.gopt = minimize(self.g_chisq, self.init_gparams, method=minimize_method, options={'xatol': xtol, 'disp': True})
-        self.sigx_gopt,self.sigy_gopt = self.gopt.x       
-        return self.x,self.y,self.freq_arr,self.freq,self.sigx_gopt,self.sigy_gopt,self.gExpected,self.Observed,self.gopt.fun;
+        print("Initial Gaussian parameters:", self.init_gparams)
+        self.gopt = minimize(self.g_chisq, self.init_gparams, method=minimize_method, options={ 'maxiter': maxiter, 'disp': verbose})
+        _,self.sigx_gopt,self.sigy_gopt,self.xo,self.yo,_ = self.gopt.x       
+        return self.x,self.y,self.xo,self.yo,self.freq_arr,self.freq,self.sigx_gopt,self.sigy_gopt,self.gExpected,self.Observed,self.gopt.fun;
 
 
 #Zernike Transform Fit class
 
 class ZernikeFit:
-    def __init__(self,x,y,xo,yo,freq_arr,data,N,freq = 400,error_type='proportional',normalize_data=True):
+    def __init__(self,x,y,xo,yo,freq_arr,freq,data,N,error_type='proportional',normalize_data=True):
         self.x = x
         self.y = y
         self.xo = xo
         self.yo = yo
         self.freq_arr = freq_arr
         self.freq = freq
-        self.Observed = data[int((freq-400)/50)]
+        self.Observed = data
+        self.N = N
         if normalize_data:
             self.Observed = self.Observed/np.max(self.Observed)
             print("Data normalized to maximum value.")
@@ -127,7 +131,7 @@ class ZernikeFit:
             self.error = np.ones_like(self.Observed)
         else:
             raise ValueError("Unsupported error type. Please use 'proportional' or 'uniform'.")
-        self.N = N
+        
 
     def basis_N(self,params):
         '''Routine to generate Zernike Transforms (basis) from Bessel function of first kind to fit a data set'''
@@ -137,8 +141,7 @@ class ZernikeFit:
         rm[rm==0] = 1e-10
         #rho = rho/sig
         thetam = np.arctan2(ym,xm)
-
-        self.Basis = np.zeros((self.N,len(rm.flatten())),dtype="float64")
+        self.Basis = np.zeros((int(self.N),int(len(rm.flatten()))),dtype="float32")
         count = 0
         for j in range(0,self.N):
             n,m = NollToQuantum(j)
@@ -151,7 +154,7 @@ class ZernikeFit:
     def zt_chisq(self,params):
         '''Routine to compute chisq for Zernike fit'''
         self.basis_N(params)
-        w = 1/self.error
+        w = 1/self.error.flatten()**2
         Bw = self.Basis*np.sqrt(w[:,np.newaxis])
         Cw = self.Observed*np.sqrt(w)
         self.coef,_,_,_ = sp.linalg.lstsq(Bw,Cw)
@@ -159,25 +162,16 @@ class ZernikeFit:
         Expected = self.Expected.flatten()
         Observed = self.Observed.flatten()
         k=len(self.coef)
-        chi = np.vdot((Observed - Expected)/(self.error),(Observed - Expected)/(self.error))/(len(Observed) -k-2)
+        chi = np.vdot((Observed - Expected)/(self.error.flatten()),(Observed - Expected)/(self.error.flatten()))/(len(Observed) -k-2)
         chi2=np.abs(chi)
         return (chi2);
 
-    def optimize_ZT(self,init_ztparams,method='Nelder-Mead',xtol=1e-8,maxiter=100):
+    def optimize_ZT(self,init_ztparams,minimize_method='Nelder-Mead',xtol=1e-8,maxiter=100):
         '''Routine to optimize Zernike fit by minimizing chisq'''
         self.init_ztparams = init_ztparams
-        self.ztopt = minimize(self.zt_chisq, self.init_ztparams, method=method, options={'xatol': xtol, 'disp': True},maxiter=maxiter)
+        self.ztopt = minimize(self.zt_chisq, self.init_ztparams, method=minimize_method, options={'xatol': xtol, 'disp': True, 'maxiter': maxiter})
         self.sigx_ztopt,self.sigy_ztopt = self.ztopt.x         
         return self.sigx_ztopt,self.sigy_ztopt,self.coef,self.Expected,self.ztopt.fun;
-
-
-
-
-
-
-
-
-
 
 
 

@@ -6,7 +6,7 @@
   aperture_diameter: 6.0   # aperture diameter in meters, default for Hirax is 6m
 
   # Data parameters
-  datafile: "beams_cart_perturbed_fiducial.npz"  # path to the input data file (FITS, HDF5, NPY, NPZ, or TXT format)
+  datafile: "downsampled_cube.npz"  # path to the input data file (FITS, HDF5, NPY, NPZ, or TXT format)
   normalize_data: True     # whether to normalize the data before fitting
 
   gaussian_error_type: "uniform"      # type of error to use in Gaussian fitting, options are "uniform" or "proportional"
@@ -14,7 +14,7 @@
   gminimize_method: "Nelder-Mead"  # minimization method for Gaussian fit, options are "L-BFGS-B", "Nelder-Mead", "Powell", etc.
   gmaxiter: 100           # maximum number of iterations for the Gaussian minimization algorithm
   gtol: 1e-6               # tolerance for termination of the Gaussian minimization algorithm
-  gverbose: False           # whether to print detailed logs during Gaussian fitting
+  gverbose: True           # whether to print detailed logs during Gaussian fitting
 
   zernike_error_type: "proportional"       # type of error to use in Zernike fitting, options are "uniform", "proportional", or "custom"
   N: 15                    # number of Zernike polynomials to fit, default is 15
