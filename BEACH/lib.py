@@ -16,6 +16,7 @@ import os
 import h5py 
 import pandas as pd
 from astropy.io import fits
+from tqdm import tqdm
 
 
 
@@ -63,6 +64,7 @@ class GaussianFit:
             self.Observed = np.load(datafile)
         elif datafile.endswith('.npz'):
             self.Observed = np.load(datafile)['fiducial'][int((self.freq-400)/50)]
+            self.Observed[np.isnan(self.Observed)] = 0.0
             self.x = np.load(datafile)['x']
             self.y = np.load(datafile)['y']
             self.freq_arr = np.load(datafile)['freq']
@@ -111,6 +113,7 @@ class GaussianFit:
 
 class ZernikeFit:
     def __init__(self,x,y,xo,yo,freq_arr,freq,data,N,error_type='proportional',normalize_data=True):
+        self.pbar = None
         self.x = x
         self.y = y
         self.xo = xo
@@ -155,21 +158,28 @@ class ZernikeFit:
         '''Routine to compute chisq for Zernike fit'''
         self.basis_N(params)
         w = 1/self.error.flatten()**2
-        Bw = self.Basis*np.sqrt(w[:,np.newaxis])
-        Cw = self.Observed*np.sqrt(w)
+        Bw = self.Basis.T*np.sqrt(w[:,np.newaxis])
+        Cw = self.Observed.flatten()*np.sqrt(w)
         self.coef,_,_,_ = sp.linalg.lstsq(Bw,Cw)
         self.Expected = np.dot(self.Basis.T,self.coef).reshape(self.Observed.shape)
         Expected = self.Expected.flatten()
         Observed = self.Observed.flatten()
-        k=len(self.coef)
-        chi = np.vdot((Observed - Expected)/(self.error.flatten()),(Observed - Expected)/(self.error.flatten()))/(len(Observed) -k-2)
-        chi2=np.abs(chi)
+        k = len(self.coef)
+        resid = (Observed - Expected) / np.sqrt(self.error.flatten())
+        chi_red = np.vdot(resid, resid).real / (len(Observed) - k)
+        chi2=np.abs(chi_red)
         return (chi2);
 
+    def callback(self, xk):
+        if self.pbar is not None:
+            self.pbar.update(1)
+            self.pbar.set_postfix({"x": f"{xk[0]:.4f}"})
+        
     def optimize_ZT(self,init_ztparams,minimize_method='Nelder-Mead',xtol=1e-8,maxiter=100):
         '''Routine to optimize Zernike fit by minimizing chisq'''
         self.init_ztparams = init_ztparams
-        self.ztopt = minimize(self.zt_chisq, self.init_ztparams, method=minimize_method, options={'xatol': xtol, 'disp': True, 'maxiter': maxiter})
+        self.pbar = tqdm(desc="Optimizing", unit="iter", dynamic_ncols=True)
+        self.ztopt = minimize(self.zt_chisq, self.init_ztparams, callback=self.callback,method=minimize_method, options={ 'disp': True, 'maxiter': maxiter})
         self.sigx_ztopt,self.sigy_ztopt = self.ztopt.x         
         return self.sigx_ztopt,self.sigy_ztopt,self.coef,self.Expected,self.ztopt.fun;
 

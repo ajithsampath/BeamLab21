@@ -3,7 +3,6 @@
 
 
 from lib import *
-
 #read config_fit.yaml file
 with open('config_fit.yaml', 'r') as file:
     config = yaml.safe_load(file)
@@ -40,8 +39,9 @@ ztfit = ZernikeFit(x,y,xo,yo,freq_arr,freq,data,config['N'],error_type=config['z
 init_ztparams = [sigx_gopt,sigy_gopt] # Use optimized Gaussian sigmas as initial guess for Zernike fit
 
 print("Starting Zernike fit optimization...")
-fit_params, model_beam = ztfit.optimize_ZT(init_ztparams,minimize_method=config['ztminimize_method'],xtol=config['zttol'],maxiter=config['ztmaxiter'])
-print("Zernike fit completed. Fit parameters:", fit_params)
+
+sigx,sigy,coef,model_beam,optfun = ztfit.optimize_ZT(init_ztparams,minimize_method=config['ztminimize_method'],xtol=config['zttol'],maxiter=config['ztmaxiter'])
+print("Zernike fit completed. Fit parameters:", coef)
 
 
 #Save fit parameters to csv file
