@@ -18,18 +18,12 @@ import pandas as pd
 from astropy.io import fits
 from tqdm import tqdm
 
-
-
 def NollToQuantum(j):
     n=int(np.ceil((-3+np.sqrt(9+(8*j)))/2))
-
     m=int((2*j)-(n*(n+2)))
-
     return (n, m);
 
-
 def QuantumToNoll(n,m):
-    
     j=int((n*(n+2)+m)/2)
     return j;
     
@@ -58,13 +52,13 @@ class GaussianFit:
     def load_beam(self,datafile,error_type='uniform'):
         if datafile.endswith('.fits'):
             hdul = fits.open(datafile)
-            self.Observed = hdul[0].data
+            self.data = hdul[0].data
             hdul.close()
         elif datafile.endswith('.npy'):
-            self.Observed = np.load(datafile)
+            self.data = np.load(datafile)
         elif datafile.endswith('.npz'):
-            self.Observed = np.load(datafile)['fiducial'][int((self.freq-400)/50)]
-            self.Observed[np.isnan(self.Observed)] = 0.0
+            self.data = np.load(datafile)['fiducial'][int((self.freq-400)/50)]
+            self.data[np.isnan(self.data)] = 0.0
             self.x = np.load(datafile)['x']
             self.y = np.load(datafile)['y']
             self.freq_arr = np.load(datafile)['freq']
@@ -73,29 +67,29 @@ class GaussianFit:
                 self.error = np.load(datafile)['error']
             else:
                 if error_type=='uniform':
-                    self.error = np.ones_like(self.Observed)
+                    self.error = np.ones_like(self.data)
                 else:
                     raise ValueError("Error array not found in .npz file. Please provide error array or set error_type to 'uniform'.")
 
         elif datafile.endswith('.txt'):           
-            self.Observed = np.loadtxt(datafile)
+            self.data = np.loadtxt(datafile)
         elif datafile.endswith('.h5') or datafile.endswith('.hdf5'):
             with h5py.File(datafile, 'r') as f:
-                self.Observed = f['dataset_name'][:]  # replace 'dataset_name' with actual dataset name
+                self.data = f['dataset_name'][:]  # replace 'dataset_name' with actual dataset name
         elif datafile.endswith('.csv'):
             df = pd.read_csv(datafile)
-            self.Observed = df.values  # assuming the entire CSV is the data
+            self.data = df.values  # assuming the entire CSV is the data
         else:
             raise ValueError("Unsupported file format. Please use .fits, .h5/.hdf5, or .csv files.")
-        return self.Observed;
+        return self.data;
       
     def g_chisq(self,params):
         '''Routine to compute chisq for Gaussian fit'''
         self.gExpected = twoD_Gaussian(self.x,self.y,params)
         Expected = self.gExpected.flatten()
-        Observed = self.Observed.flatten()
+        data = self.data.flatten()
         k=len(params)
-        chi = np.vdot((Observed - Expected)/(self.error.flatten()),(Observed - Expected)/(self.error.flatten()))/(len(Observed)-k-2)
+        chi = np.vdot((data - Expected)/(self.error.flatten()),(data - Expected)/(self.error.flatten()))/(len(data)-k-2)
         chi2=np.abs(chi)
         print("Current Gaussian parameters:", params, "Chisq:", chi2)
         return (chi2);
@@ -106,7 +100,7 @@ class GaussianFit:
         print("Initial Gaussian parameters:", self.init_gparams)
         self.gopt = minimize(self.g_chisq, self.init_gparams, method=minimize_method, options={ 'maxiter': maxiter, 'disp': verbose})
         _,self.sigx_gopt,self.sigy_gopt,self.xo,self.yo,_ = self.gopt.x       
-        return self.x,self.y,self.xo,self.yo,self.freq_arr,self.freq,self.sigx_gopt,self.sigy_gopt,self.gExpected,self.Observed,self.gopt.fun;
+        return self.x,self.y,self.xo,self.yo,self.freq_arr,self.freq,self.sigx_gopt,self.sigy_gopt,self.gExpected,self.data,self.gopt.fun;
 
 
 #Zernike Transform Fit class
@@ -120,18 +114,18 @@ class ZernikeFit:
         self.yo = yo
         self.freq_arr = freq_arr
         self.freq = freq
-        self.Observed = data
+        self.data = data
         self.N = N
         if normalize_data:
-            self.Observed = self.Observed/np.max(self.Observed)
+            self.data = self.data/np.max(self.data)
             print("Data normalized to maximum value.")
         else:
             print("Data not normalized.")
             pass
         if error_type=='proportional':
-            self.error = np.abs(self.Observed)*0.05 + 1e-3
+            self.error = np.abs(self.data)*0.05 + 1e-3
         elif error_type=='uniform':
-            self.error = np.ones_like(self.Observed)
+            self.error = np.ones_like(self.data)
         else:
             raise ValueError("Unsupported error type. Please use 'proportional' or 'uniform'.")
         
@@ -159,14 +153,14 @@ class ZernikeFit:
         self.basis_N(params)
         w = 1/self.error.flatten()**2
         Bw = self.Basis.T*np.sqrt(w[:,np.newaxis])
-        Cw = self.Observed.flatten()*np.sqrt(w)
+        Cw = self.data.flatten()*np.sqrt(w)
         self.coef,_,_,_ = sp.linalg.lstsq(Bw,Cw)
-        self.Expected = np.dot(self.Basis.T,self.coef).reshape(self.Observed.shape)
+        self.Expected = np.dot(self.Basis.T,self.coef).reshape(self.data.shape)
         Expected = self.Expected.flatten()
-        Observed = self.Observed.flatten()
+        data = self.data.flatten()
         k = len(self.coef)
-        resid = (Observed - Expected) / np.sqrt(self.error.flatten())
-        chi_red = np.vdot(resid, resid).real / (len(Observed) - k)
+        resid = (data - Expected) / np.sqrt(self.error.flatten())
+        chi_red = np.vdot(resid, resid).real / (len(data) - k)
         chi2=np.abs(chi_red)
         return (chi2);
 
@@ -183,6 +177,36 @@ class ZernikeFit:
         self.sigx_ztopt,self.sigy_ztopt = self.ztopt.x         
         return self.sigx_ztopt,self.sigy_ztopt,self.coef,self.Expected,self.ztopt.fun;
 
+    def plot_results(self,data,model,coef,save_plots,plot_format,plot_directory):
+        ms=1.5
+        vmin=None
+        vmax=None
+        residue = data - model
+    
+        #plot 2D cst,fit and residue and x and y Cuts
+        plt.figure(figsize=(12,6))
+        ax1 = plt.subplot(131,projection='polar')
+        ax2 = plt.subplot(132,projection='polar')
+        ax3 = plt.subplot(133,projection='polar')
+        
+        z1_plot=ax1.scatter(phi,rho,c=np.log(data),cmap='inferno',s=ms,vmin=vmin,vmax=vmax)
+        ax1.grid(False)
+        plt.colorbar(z1_plot,ax=ax1,fraction=0.047)
+        ax1.set_title("Simulated CST beam")
+        z2_plot=ax2.scatter(phi,rho,c=np.log(fit),cmap='inferno',s=ms,vmin=vmin,vmax=vmax)
+        ax2.grid(False)
+        plt.colorbar(z2_plot,ax=ax2,fraction=0.047)
+        ax2.set_title("Fit with "+str(no_basis)+" basis functions")
+        ax2.get_yaxis().set_visible(False)
+        z3_plot=ax3.scatter(phi,rho,c=(residue),cmap='seismic',s=ms,vmin=vmin,vmax=vmax)
+        ax3.grid(False)
+        plt.colorbar(z3_plot,ax=ax3,fraction=0.047)
+        ax3.set_title("Abs Residue")
+        ax3.get_yaxis().set_visible(False)
+        plt.tight_layout()
+
+        plt.savefig(fpath+"/fiducial/plots/Fiducial_ "+str(freq)+"MHz_yerr="+str(per)+"%_N="+str(N)+"_sig="+str(params)+".png",dpi=150)
+        plt.clf()
 
 
 #Generative Beam class

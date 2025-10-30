@@ -48,4 +48,4 @@ print("Zernike fit completed. Fit parameters:", coef)
 np.savetxt(output_name, coef, delimiter=",")
 #Plot results
 if plot_results:
-    ztfit.plot_results(gfit.Observed,model_beam,coef,save_plots,plot_format,plot_directory)  
+    ztfit.plot_results(gfit.data,model_beam,coef,gfit.rho,gfit.phi,save_plots,plot_format,plot_directory)  
