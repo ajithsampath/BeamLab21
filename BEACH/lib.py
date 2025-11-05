@@ -177,12 +177,46 @@ class ZernikeFit:
         self.sigx_ztopt,self.sigy_ztopt = self.ztopt.x         
         return self.sigx_ztopt,self.sigy_ztopt,self.coef,self.Expected,self.ztopt.fun;
 
-    def plot_results(self,data,model,coef,save_plots,plot_format,plot_directory):
+    def plot_results_cart(self,data,model,freq,N,x,y ,plot_format,plot_directory):
         ms=1.5
         vmin=None
         vmax=None
         residue = data - model
-    
+
+        #plot 2D cst,fit and residue and x and y Cuts
+        plt.figure(figsize=(12,6))
+        ax1 = plt.subplot(131)
+        ax2 = plt.subplot(132)
+        ax3 = plt.subplot(133)
+        
+        z1_plot=ax1.imshow(x,y,np.log(data),cmap='inferno',s=ms,vmin=vmin,vmax=vmax)
+        ax1.grid(False)
+        plt.colorbar(z1_plot,ax=ax1,fraction=0.047)
+        ax1.set_title("Simulated CST beam")
+        z2_plot=ax2.imshow(x,y,np.log(model),cmap='inferno',s=ms,vmin=vmin,vmax=vmax)
+        ax2.grid(False)
+        plt.colorbar(z2_plot,ax=ax2,fraction=0.047)
+        ax2.set_title("Fit with "+str(N)+" basis functions")
+        ax2.get_yaxis().set_visible(False)
+        z3_plot=ax3.imshow(x,y,residue,cmap='seismic',s=ms,vmin=vmin,vmax=vmax)
+        ax3.grid(False)
+        plt.colorbar(z3_plot,ax=ax3,fraction=0.047)
+        ax3.set_title("Abs Residue")
+        ax3.get_yaxis().set_visible(False)
+        plt.tight_layout()
+        plotname = "BeamFitResults_"+str(freq)+"MHz with N="+str(N)+plot_format
+        if not os.path.exists(plot_directory):
+            os.makedirs(plot_directory)
+        plt.savefig(os.path.join(plot_directory, plotname), bbox_inches='tight', dpi=300)
+        plt.clf()
+
+
+    def plot_results_polar(self,data,model,freq,N,rho,phi ,plot_format,plot_directory):
+        ms=1.5
+        vmin=None
+        vmax=None
+        residue = data - model
+
         #plot 2D cst,fit and residue and x and y Cuts
         plt.figure(figsize=(12,6))
         ax1 = plt.subplot(131,projection='polar')
@@ -193,10 +227,10 @@ class ZernikeFit:
         ax1.grid(False)
         plt.colorbar(z1_plot,ax=ax1,fraction=0.047)
         ax1.set_title("Simulated CST beam")
-        z2_plot=ax2.scatter(phi,rho,c=np.log(fit),cmap='inferno',s=ms,vmin=vmin,vmax=vmax)
+        z2_plot=ax2.scatter(phi,rho,c=np.log(model),cmap='inferno',s=ms,vmin=vmin,vmax=vmax)
         ax2.grid(False)
         plt.colorbar(z2_plot,ax=ax2,fraction=0.047)
-        ax2.set_title("Fit with "+str(no_basis)+" basis functions")
+        ax2.set_title("Fit with "+str(N)+" basis functions")
         ax2.get_yaxis().set_visible(False)
         z3_plot=ax3.scatter(phi,rho,c=(residue),cmap='seismic',s=ms,vmin=vmin,vmax=vmax)
         ax3.grid(False)
@@ -204,8 +238,10 @@ class ZernikeFit:
         ax3.set_title("Abs Residue")
         ax3.get_yaxis().set_visible(False)
         plt.tight_layout()
-
-        plt.savefig(fpath+"/fiducial/plots/Fiducial_ "+str(freq)+"MHz_yerr="+str(per)+"%_N="+str(N)+"_sig="+str(params)+".png",dpi=150)
+        plotname = "BeamFitResults_"+str(freq)+"MHz with N="+str(N)+plot_format
+        if not os.path.exists(plot_directory):
+            os.makedirs(plot_directory)
+        plt.savefig(os.path.join(plot_directory, plotname), bbox_inches='tight', dpi=300)
         plt.clf()
 
 

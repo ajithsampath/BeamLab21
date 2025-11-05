@@ -24,8 +24,7 @@
   zverbose: False           # whether to print detailed logs during fitting
 
   plot_results: True      # whether to plot the fitting results
-  save_plots: True        # whether to save the plots
-  plot_format: "png"      # format for saving plots, options are "png", "pdf", etc.
+  plot_format: ".png"      # format for saving plots, options are "png", "pdf", etc.
   plot_directory: "plots" # directory to save plots
 
 
