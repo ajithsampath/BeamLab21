@@ -13,7 +13,6 @@ freq = config['frequency']
 
 output_name = config['output_filename']+config['output_format']
 plot_results = config['plot_results']
-save_plots = config['save_plots']
 plot_format = config['plot_format']
 plot_directory = config['plot_directory']
 init_gparams = np.array(config['init_gparams'])  # Initial guess for Gaussian sigmas in arcminutes
@@ -24,7 +23,7 @@ print("Frequency channel (MHz):", config['frequency'])
 
 #Initialize GaussianFit class
 gfit = GaussianFit(datafile,freq,error_type=config['gaussian_error_type'])
-print("Data loaded. Shape of observed data:", gfit.Observed.shape)
+print("Data loaded. Shape of observed data:", gfit.data.shape)
 #Optimize Gaussian fit
 print("Starting Gaussian fit optimization...")
 
@@ -48,4 +47,4 @@ print("Zernike fit completed. Fit parameters:", coef)
 np.savetxt(output_name, coef, delimiter=",")
 #Plot results
 if plot_results:
-    ztfit.plot_results(gfit.data,model_beam,coef,gfit.rho,gfit.phi,save_plots,plot_format,plot_directory)  
+    ztfit.plot_results_cart(gfit.data,model_beam,freq,config['N'],plot_format,plot_directory) 

@@ -260,8 +260,6 @@ class GenBeam:
             self.coef = df['Coefficient'].values  # assuming the entire CSV is the data
         elif coeffile.endswith('.npy'):
             self.coef = np.load(coeffile)
-        elif coeffile.endswith('.npz'):
-            self.coef = np.load(coeffile)['arr_0']
         else:
             raise ValueError("Unsupported file format. Please use .csv or .npy/.npz files.")
         return self.coef; 
