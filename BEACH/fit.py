@@ -47,4 +47,5 @@ print("Zernike fit completed. Fit parameters:", coef)
 np.savetxt(output_name, coef, delimiter=",")
 #Plot results
 if plot_results:
-    ztfit.plot_results_cart(gfit.data,model_beam,freq,config['N'],plot_format,plot_directory) 
+    ztfit.plot_results_cart(gfit.data,model_beam,freq,config['N'],x,y,plot_format,plot_directory) 
+    print("Plotted and saved...!!!")

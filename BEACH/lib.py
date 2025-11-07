@@ -167,7 +167,7 @@ class ZernikeFit:
     def callback(self, xk):
         if self.pbar is not None:
             self.pbar.update(1)
-            self.pbar.set_postfix({"x": f"{xk[0]:.4f}"})
+            self.pbar.set_postfix({"Chi-square": f"{xk[0]:.4f}"})
         
     def optimize_ZT(self,init_ztparams,minimize_method='Nelder-Mead',xtol=1e-8,maxiter=100):
         '''Routine to optimize Zernike fit by minimizing chisq'''
@@ -177,37 +177,38 @@ class ZernikeFit:
         self.sigx_ztopt,self.sigy_ztopt = self.ztopt.x         
         return self.sigx_ztopt,self.sigy_ztopt,self.coef,self.Expected,self.ztopt.fun;
 
-    def plot_results_cart(self,data,model,freq,N,x,y ,plot_format,plot_directory):
+    def plot_results_cart(self,data,model,freq,N,x,y,plot_format,plot_directory):
         ms=1.5
         vmin=None
         vmax=None
         residue = data - model
-
+        extent = [x.min(), x.max(), y.min(), y.max()]
         #plot 2D cst,fit and residue and x and y Cuts
         plt.figure(figsize=(12,6))
         ax1 = plt.subplot(131)
         ax2 = plt.subplot(132)
         ax3 = plt.subplot(133)
         
-        z1_plot=ax1.imshow(x,y,np.log(data),cmap='inferno',s=ms,vmin=vmin,vmax=vmax)
+        z1_plot=ax1.imshow(np.log(data),cmap='inferno',vmin=vmin,vmax=vmax,extent=extent)
         ax1.grid(False)
         plt.colorbar(z1_plot,ax=ax1,fraction=0.047)
         ax1.set_title("Simulated CST beam")
-        z2_plot=ax2.imshow(x,y,np.log(model),cmap='inferno',s=ms,vmin=vmin,vmax=vmax)
+        z2_plot=ax2.imshow(np.log(model),cmap='inferno',vmin=vmin,vmax=vmax,extent=extent)
         ax2.grid(False)
         plt.colorbar(z2_plot,ax=ax2,fraction=0.047)
         ax2.set_title("Fit with "+str(N)+" basis functions")
         ax2.get_yaxis().set_visible(False)
-        z3_plot=ax3.imshow(x,y,residue,cmap='seismic',s=ms,vmin=vmin,vmax=vmax)
+        z3_plot=ax3.imshow(residue,cmap='seismic',vmin=vmin,vmax=vmax,extent=extent)
         ax3.grid(False)
         plt.colorbar(z3_plot,ax=ax3,fraction=0.047)
         ax3.set_title("Abs Residue")
         ax3.get_yaxis().set_visible(False)
         plt.tight_layout()
         plotname = "BeamFitResults_"+str(freq)+"MHz with N="+str(N)+plot_format
-        if not os.path.exists(plot_directory):
-            os.makedirs(plot_directory)
-        plt.savefig(os.path.join(plot_directory, plotname), bbox_inches='tight', dpi=300)
+        new_dir = os.path.join(os.getcwd(), plot_directory)
+        os.makedirs(new_dir, exist_ok=True)
+        print("Making the plot.....")
+        plt.savefig(os.path.join(new_dir, plotname), bbox_inches='tight', dpi=300)
         plt.clf()
 
 
@@ -239,9 +240,10 @@ class ZernikeFit:
         ax3.get_yaxis().set_visible(False)
         plt.tight_layout()
         plotname = "BeamFitResults_"+str(freq)+"MHz with N="+str(N)+plot_format
-        if not os.path.exists(plot_directory):
-            os.makedirs(plot_directory)
-        plt.savefig(os.path.join(plot_directory, plotname), bbox_inches='tight', dpi=300)
+        new_dir = os.path.join(os.getcwd(), plot_directory)
+        os.makedirs(new_dir, exist_ok=True)
+        print("Making the plot.....")
+        plt.savefig(os.path.join(new_dir, plotname), bbox_inches='tight', dpi=300)
         plt.clf()
 
 
