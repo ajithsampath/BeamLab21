@@ -43,13 +43,13 @@ def twoD_Gaussian(x,y,params):
 #Gaussian Fit class
 
 class GaussianFit:
-    def __init__(self,datafile,freq,error_type='uniform'):
+    def __init__(self,datafile,freq,error_type='uniform',normalize_data=True):
         '''Routine to load data from fits/hdf5/csv file'''
         self.freq = freq
-        self.load_beam(datafile,error_type)
+        self.load_beam(datafile,error_type,normalize_data)
 
 
-    def load_beam(self,datafile,error_type='uniform'):
+    def load_beam(self,datafile,error_type='uniform',normalize_data=True):
         if datafile.endswith('.fits'):
             hdul = fits.open(datafile)
             self.data = hdul[0].data
@@ -57,8 +57,13 @@ class GaussianFit:
         elif datafile.endswith('.npy'):
             self.data = np.load(datafile)
         elif datafile.endswith('.npz'):
-            self.data = np.load(datafile)['data'][int((self.freq-400)/50)].astype(np.float32)
+            self.data = np.load(datafile)['data'][int((self.freq-400)/50)]
             self.data[np.isnan(self.data)] = 0.0
+            if normalize_data:
+                self.data = self.data/np.max(self.data)
+            else:
+                self.data = self.data               
+
             self.x = np.load(datafile)['x']
             self.y = np.load(datafile)['y']
             self.freq_arr = np.load(datafile)['freq']
@@ -176,6 +181,12 @@ class ZernikeFit:
         self.ztopt = minimize(self.zt_chisq, self.init_ztparams, callback=self.callback,method=minimize_method, options={ 'disp': True, 'maxiter': maxiter})
         self.sigx_ztopt,self.sigy_ztopt = self.ztopt.x         
         return self.sigx_ztopt,self.sigy_ztopt,self.coef,self.Expected,self.ztopt.fun;
+    
+    def NO_optimize_ZT(self,init_ztparams):
+        '''Using Gaussian sigma to estimate ZT scaling parameter and skipping optimization'''
+        self.init_ztparams = [init_ztparams[0]/1,init_ztparams[1]/1]
+        self.zt_chisq(self.init_ztparams)
+        return self.init_ztparams[0],self.init_ztparams[1],self.coef,np.abs(self.Expected);
 
     def plot_results_cart(self,data,model,freq,N,x,y,plot_format,plot_directory):
         ms=1.5

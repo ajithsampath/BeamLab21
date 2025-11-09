@@ -17,7 +17,8 @@
   gverbose: True           # whether to print detailed logs during Gaussian fitting
 
   zernike_error_type: "proportional"       # type of error to use in Zernike fitting, options are "uniform", "proportional", or "custom"
-  N: 15                    # number of Zernike polynomials to fit, default is 15
+  N: 600                    # number of Zernike polynomials to fit, default is 15
+  skip_minimise: True
   ztminimize_method: "Nelder-Mead"  # minimization method, options are "L-BFGS-B", "Nelder-Mead", "Powell", etc.
   ztmaxiter: 10           # maximum number of iterations for the Zernike minimization algorithm
   zttol: 1e-6               # tolerance for termination of the Zernike minimization algorithm

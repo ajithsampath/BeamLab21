@@ -22,7 +22,7 @@ print("Telescope:", telescope_name)
 print("Frequency channel (MHz):", config['frequency'])
 
 #Initialize GaussianFit class
-gfit = GaussianFit(datafile,freq,error_type=config['gaussian_error_type'])
+gfit = GaussianFit(datafile,freq,error_type=config['gaussian_error_type'],normalize_data=config['normalize_data'])
 print("Data loaded. Shape of observed data:", gfit.data.shape)
 #Optimize Gaussian fit
 print("Starting Gaussian fit optimization...")
@@ -37,10 +37,14 @@ ztfit = ZernikeFit(x,y,xo,yo,freq_arr,freq,data,config['N'],error_type=config['z
 #Fit data to Zernike basis
 init_ztparams = [sigx_gopt,sigy_gopt] # Use optimized Gaussian sigmas as initial guess for Zernike fit
 
-print("Starting Zernike fit optimization...")
+if config['skip_minimise']:
+    sigx,sigy,coef,model_beam= ztfit.NO_optimize_ZT(init_ztparams)
 
-sigx,sigy,coef,model_beam,optfun = ztfit.optimize_ZT(init_ztparams,minimize_method=config['ztminimize_method'],xtol=config['zttol'],maxiter=config['ztmaxiter'])
-print("Zernike fit completed. Fit parameters:", coef)
+else:
+    print("Starting Zernike fit optimization by varying scaling parameters...")
+
+    sigx,sigy,coef,model_beam,optfun = ztfit.optimize_ZT(init_ztparams,minimize_method=config['ztminimize_method'],xtol=config['zttol'],maxiter=config['ztmaxiter'])
+    print("Zernike fit completed. Fit parameters:", coef)
 
 
 #Save fit parameters to csv file
