@@ -57,7 +57,7 @@ class GaussianFit:
         elif datafile.endswith('.npy'):
             self.data = np.load(datafile)
         elif datafile.endswith('.npz'):
-            self.data = np.load(datafile)['fiducial'][int((self.freq-400)/50)]
+            self.data = np.load(datafile)['data'][int((self.freq-400)/50)].astype(np.float32)
             self.data[np.isnan(self.data)] = 0.0
             self.x = np.load(datafile)['x']
             self.y = np.load(datafile)['y']
@@ -245,6 +245,7 @@ class ZernikeFit:
         print("Making the plot.....")
         plt.savefig(os.path.join(new_dir, plotname), bbox_inches='tight', dpi=300)
         plt.clf()
+        plt.close('all')
 
 
 #Generative Beam class
