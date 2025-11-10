@@ -128,7 +128,7 @@ class ZernikeFit:
             print("Data not normalized.")
             pass
         if error_type=='proportional':
-            self.error = np.abs(self.data)*0.05 + 1e-3
+            self.error = np.abs(self.data)*0.1 
         elif error_type=='uniform':
             self.error = np.ones_like(self.data)
         else:
@@ -184,7 +184,7 @@ class ZernikeFit:
     
     def NO_optimize_ZT(self,init_ztparams):
         '''Using Gaussian sigma to estimate ZT scaling parameter and skipping optimization'''
-        self.init_ztparams = [init_ztparams[0]/1,init_ztparams[1]/1]
+        self.init_ztparams = [init_ztparams[0]/3,init_ztparams[1]/3]
         self.zt_chisq(self.init_ztparams)
         return self.init_ztparams[0],self.init_ztparams[1],self.coef,np.abs(self.Expected);
 
