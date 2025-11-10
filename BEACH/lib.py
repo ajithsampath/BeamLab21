@@ -7,7 +7,7 @@
 import numpy as np
 from scipy.special import jn
 import matplotlib.pyplot as plt
-from scipy.optimize import fmin,minimize
+from scipy.optimize import fmin,minimize, OptimizeWarning
 import scipy as sp
 from scipy.interpolate import interp1d
 import time
@@ -17,6 +17,9 @@ import h5py
 import pandas as pd
 from astropy.io import fits
 from tqdm import tqdm
+import warnings
+warnings.filterwarnings("ignore", category=OptimizeWarning)
+
 
 def NollToQuantum(j):
     n=int(np.ceil((-3+np.sqrt(9+(8*j)))/2))
@@ -39,218 +42,311 @@ def twoD_Gaussian(x,y,params):
     
     return amp*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo) + c*((y-yo)**2)));
 
+        
+
+
+def load_beam(datafile,error_type='uniform',normalize_data=True):
+    if datafile.endswith('.fits'):
+        hdul = fits.open(datafile)
+        data = hdul[0].data
+        hdul.close()
+    elif datafile.endswith('.npy'):
+        data = np.load(datafile)
+    elif datafile.endswith('.npz'):
+        data = np.load(datafile)['data']
+        data[np.isnan(data)] = 0.0
+        if normalize_data:
+            data = data/np.max(data)
+        else:
+            data = data               
+
+        x = np.load(datafile)['x']
+        y = np.load(datafile)['y']
+        freq_arr = np.load(datafile)['freq']
+        nchan = freq_arr.shape[0]
+        if np.load(datafile).keys().__contains__('error'):
+            error = np.load(datafile)['error']
+        else:
+            error = None
+
+    elif datafile.endswith('.txt'):           
+        data = np.loadtxt(datafile)
+    elif datafile.endswith('.h5') or datafile.endswith('.hdf5'):
+        with h5py.File(datafile, 'r') as f:
+            data = f['dataset_name'][:]  # replace 'dataset_name' with actual dataset name
+    elif datafile.endswith('.csv'):
+        df = pd.read_csv(datafile)
+        data = df.values  # assuming the entire CSV is the data
+    else:
+        raise ValueError("Unsupported file format. Please use .fits, .h5/.hdf5, or .csv files.")
+    
+    return x,y,freq_arr,nchan,error,data;
+
 
 #Gaussian Fit class
 
+
 class GaussianFit:
-    def __init__(self,datafile,freq,error_type='uniform',normalize_data=True):
-        '''Routine to load data from fits/hdf5/csv file'''
+    def __init__(self, datafile, freq, error_type='uniform',
+                 normalize_data=True, coord_type='auto'):
+        """
+        Routine to load data from fits/hdf5/csv file.
+        coord_type : 'cartesian', 'polar', or 'auto'
+        """
         self.freq = freq
-        self.load_beam(datafile,error_type,normalize_data)
+        self.x, self.y, self.freq_arr, self.nchan, self.error, self.data_cube = \
+            load_beam(datafile, error_type, normalize_data)
 
-
-    def load_beam(self,datafile,error_type='uniform',normalize_data=True):
-        if datafile.endswith('.fits'):
-            hdul = fits.open(datafile)
-            self.data = hdul[0].data
-            hdul.close()
-        elif datafile.endswith('.npy'):
-            self.data = np.load(datafile)
-        elif datafile.endswith('.npz'):
-            self.data = np.load(datafile)['data'][int((self.freq-400)/50)]
-            self.data[np.isnan(self.data)] = 0.0
-            if normalize_data:
-                self.data = self.data/np.max(self.data)
+        # Auto-detect coordinate system if requested
+        if coord_type == 'auto':
+            # Heuristic: if range of x ~ [0, 2π] and min(y) >= 0 => polar (r, θ)
+            if np.all(self.x >= 0) and np.all((self.y >= 0) & (self.y <= 2*np.pi)):
+                coord_type = 'polar'
             else:
-                self.data = self.data               
+                coord_type = 'cartesian'
+        self.coord_type = coord_type
 
-            self.x = np.load(datafile)['x']
-            self.y = np.load(datafile)['y']
-            self.freq_arr = np.load(datafile)['freq']
-            self.nchan = self.freq_arr.shape[0]
-            if np.load(datafile).keys().__contains__('error'):
-                self.error = np.load(datafile)['error']
+        # Convert polar → Cartesian for fitting, if needed
+        if self.coord_type == 'polar':
+            r, theta = self.x, self.y
+            self.x = r * np.cos(theta)
+            self.y = r * np.sin(theta)
+
+        dfreq = np.abs(self.freq_arr[1] - self.freq_arr[0])
+        self.data = self.data_cube[int((freq - 400) / dfreq)]
+
+        if self.error is None:
+            if error_type == 'uniform':
+                self.error = np.ones_like(self.data)
+                print("Proceeding with uniform error array...")
             else:
-                if error_type=='uniform':
-                    self.error = np.ones_like(self.data)
-                else:
-                    raise ValueError("Error array not found in .npz file. Please provide error array or set error_type to 'uniform'.")
+                raise ValueError(
+                    "Error array not found. Provide error array or set error_type='uniform'."
+                )
 
-        elif datafile.endswith('.txt'):           
-            self.data = np.loadtxt(datafile)
-        elif datafile.endswith('.h5') or datafile.endswith('.hdf5'):
-            with h5py.File(datafile, 'r') as f:
-                self.data = f['dataset_name'][:]  # replace 'dataset_name' with actual dataset name
-        elif datafile.endswith('.csv'):
-            df = pd.read_csv(datafile)
-            self.data = df.values  # assuming the entire CSV is the data
-        else:
-            raise ValueError("Unsupported file format. Please use .fits, .h5/.hdf5, or .csv files.")
-        return self.data;
-      
-    def g_chisq(self,params):
-        '''Routine to compute chisq for Gaussian fit'''
-        self.gExpected = twoD_Gaussian(self.x,self.y,params)
+    def callback(self, xk):
+        if hasattr(self, "pbar") and self.pbar is not None:
+            self.pbar.update(1)
+            self.pbar.set_postfix({"Chi-square": f"{xk[0]:.4f}"})
+
+    def g_chisq(self, params):
+        """Routine to compute chisq for Gaussian fit"""
+        self.gExpected = twoD_Gaussian(self.x, self.y, params)
         Expected = self.gExpected.flatten()
         data = self.data.flatten()
-        k=len(params)
-        chi = np.vdot((data - Expected)/(self.error.flatten()),(data - Expected)/(self.error.flatten()))/(len(data)-k-2)
-        chi2=np.abs(chi)
-        print("Current Gaussian parameters:", params, "Chisq:", chi2)
-        return (chi2);
+        k = len(params)
+        chi = np.vdot((data - Expected) / self.error.flatten(),
+                      (data - Expected) / self.error.flatten()) / (len(data) - k - 2)
+        return np.abs(chi)
 
-    def optimize_Gauss(self,init_gparams,minimize_method = 'Nelder-Mead',xtol=1e-8,maxiter=100,verbose=True):
-        '''Routine to optimize Gaussian fit by minimizing chisq'''
+    def optimize_Gauss(self, init_gparams, minimize_method='Nelder-Mead',
+                       xtol=1e-8, verbose=True):
+        """Optimize Gaussian fit by minimizing chisq"""
         self.init_gparams = init_gparams
         print("Initial Gaussian parameters:", self.init_gparams)
-        self.gopt = minimize(self.g_chisq, self.init_gparams, method=minimize_method, options={ 'maxiter': maxiter, 'disp': verbose})
-        _,self.sigx_gopt,self.sigy_gopt,self.xo,self.yo,_ = self.gopt.x       
-        return self.x,self.y,self.xo,self.yo,self.freq_arr,self.freq,self.sigx_gopt,self.sigy_gopt,self.gExpected,self.data,self.gopt.fun;
+        self.pbar = tqdm(desc="Optimizing", unit="iter", dynamic_ncols=True)
+        self.gopt = minimize(self.g_chisq, self.init_gparams,
+                             callback=self.callback,
+                             method=minimize_method,
+                             options={'disp': verbose})
+        # Ignore "max iterations exceeded" silently
+        if getattr(self.gopt, "status", None) == 1:
+            pass
 
+        _, self.sigx_gopt, self.sigy_gopt, self.xo, self.yo, _ = self.gopt.x
+        return (self.x, self.y, self.xo, self.yo, self.freq_arr,
+                self.freq, self.sigx_gopt, self.sigy_gopt,
+                self.gExpected, self.data, self.gopt.fun)
+    
 
-#Zernike Transform Fit class
-
+#Zernike Transform fit
 class ZernikeFit:
-    def __init__(self,x,y,xo,yo,freq_arr,freq,data,N,error_type='proportional',normalize_data=True):
+    def __init__(self, x, y, xo, yo, freq_arr, freq, data, N,
+                 error_type='proportional', normalize_data=True,
+                 coord_type='auto'):
+        """
+        Parameters:
+        -----------
+        x, y : array-like
+            Coordinates. Interpreted as (x,y) if coord_type='cartesian',
+            or as (r, θ) if coord_type='polar'.
+        coord_type : 'auto' (default), 'cartesian', or 'polar'
+            Coordinate system type.
+        """
         self.pbar = None
-        self.x = x
-        self.y = y
+        self.coord_type = coord_type
+
+        # Auto-detect coordinate system if needed
+        if self.coord_type == 'auto':
+            if np.all(x >= 0) and np.all((y >= 0) & (y <= 2 * np.pi)):
+                self.coord_type = 'polar'
+            else:
+                self.coord_type = 'cartesian'
+
+        if self.coord_type == 'polar':
+            self.r = x
+            self.theta = y
+            self.x = None
+            self.y = None
+        else:
+            self.x = x
+            self.y = y
+            self.r = None
+            self.theta = None
+
         self.xo = xo
         self.yo = yo
         self.freq_arr = freq_arr
         self.freq = freq
         self.data = data
         self.N = N
+
         if normalize_data:
-            self.data = self.data/np.max(self.data)
+            self.data = self.data / np.max(self.data)
             print("Data normalized to maximum value.")
         else:
             print("Data not normalized.")
-            pass
-        if error_type=='proportional':
-            self.error = np.abs(self.data)*0.1 
-        elif error_type=='uniform':
+
+        if error_type == 'proportional':
+            self.error = np.abs(self.data) * 0.1
+        elif error_type == 'uniform':
             self.error = np.ones_like(self.data)
         else:
-            raise ValueError("Unsupported error type. Please use 'proportional' or 'uniform'.")
-        
+            raise ValueError("Unsupported error type. Use 'proportional' or 'uniform'.")
 
-    def basis_N(self,params):
-        '''Routine to generate Zernike Transforms (basis) from Bessel function of first kind to fit a data set'''
-        self.sigx,self.sigy = params
-        xm,ym = np.meshgrid(self.x/self.sigx,self.y/self.sigy)
-        rm = np.hypot(xm,ym)
-        rm[rm==0] = 1e-10
-        #rho = rho/sig
-        thetam = np.arctan2(ym,xm)
-        self.Basis = np.zeros((int(self.N),int(len(rm.flatten()))),dtype="float32")
+    def basis_N(self, params):
+        """Generate Zernike basis from Bessel functions to fit the data."""
+        self.sigx, self.sigy = params
+
+        if self.coord_type == 'cartesian':
+            xm, ym = np.meshgrid(self.x / self.sigx, self.y / self.sigy)
+            rm = np.hypot(xm, ym)
+            rm[rm == 0] = 1e-10
+            thetam = np.arctan2(ym, xm)
+
+        elif self.coord_type == 'polar':
+            # Scale radius and keep angle as is
+            rm = self.r / self.sigx  # adjust scaling if needed
+            thetam = self.theta
+            rm[rm == 0] = 1e-10
+
+        self.Basis = np.zeros((int(self.N), int(len(rm.flatten()))), dtype="float32")
         count = 0
-        for j in range(0,self.N):
-            n,m = NollToQuantum(j)
-            if n>=0 and n>=abs(m) and (n-abs(m))%2==0:
-                Bes=(jn(n+1,rm))/rm
-                nc = (((2*n+1)*(2*n+3)*(2*n+5))/(-1)**n)**0.5
-                temp=np.real((nc*(np.exp(1j*m*thetam))/((1j**m)*2*np.pi) *(-1)**((n-m)/2) *Bes))
-                self.Basis[count]=temp.flatten()
-                count+=1            
-    def zt_chisq(self,params):
-        '''Routine to compute chisq for Zernike fit'''
+        for j in range(0, self.N):
+            n, m = NollToQuantum(j)
+            if n >= 0 and n >= abs(m) and (n - abs(m)) % 2 == 0:
+                Bes = (jn(n + 1, rm)) / rm
+                nc = (((2 * n + 1) * (2 * n + 3) * (2 * n + 5)) / (-1) ** n) ** 0.5
+                temp = np.real(
+                    (nc * (np.exp(1j * m * thetam)) / ((1j ** m) * 2 * np.pi) * (-1) ** ((n - m) // 2) * Bes)
+                )
+                self.Basis[count] = temp.flatten()
+                count += 1
+
+    def zt_chisq(self, params):
+        """Compute chi-squared for Zernike fit."""
         self.basis_N(params)
-        w = 1/self.error.flatten()**2
-        Bw = self.Basis.T*np.sqrt(w[:,np.newaxis])
-        Cw = self.data.flatten()*np.sqrt(w)
-        self.coef,_,_,_ = sp.linalg.lstsq(Bw,Cw)
-        self.Expected = np.dot(self.Basis.T,self.coef).reshape(self.data.shape)
+        w = 1 / self.error.flatten() ** 2
+        Bw = self.Basis.T * np.sqrt(w[:, np.newaxis])
+        Cw = self.data.flatten() * np.sqrt(w)
+        self.coef, _, _, _ = sp.linalg.lstsq(Bw, Cw)
+        self.Expected = np.dot(self.Basis.T, self.coef).reshape(self.data.shape)
         Expected = self.Expected.flatten()
         data = self.data.flatten()
         k = len(self.coef)
         resid = (data - Expected) / np.sqrt(self.error.flatten())
         chi_red = np.vdot(resid, resid).real / (len(data) - k)
-        chi2=np.abs(chi_red)
-        return (chi2);
+        return np.abs(chi_red)
 
     def callback(self, xk):
         if self.pbar is not None:
             self.pbar.update(1)
             self.pbar.set_postfix({"Chi-square": f"{xk[0]:.4f}"})
-        
-    def optimize_ZT(self,init_ztparams,minimize_method='Nelder-Mead',xtol=1e-8,maxiter=100):
-        '''Routine to optimize Zernike fit by minimizing chisq'''
+
+    def optimize_ZT(self, init_ztparams, minimize_method='Nelder-Mead', xtol=1e-8, maxiter=100):
+        """Optimize Zernike fit by minimizing chi-squared."""
         self.init_ztparams = init_ztparams
         self.pbar = tqdm(desc="Optimizing", unit="iter", dynamic_ncols=True)
-        self.ztopt = minimize(self.zt_chisq, self.init_ztparams, callback=self.callback,method=minimize_method, options={ 'disp': True, 'maxiter': maxiter})
-        self.sigx_ztopt,self.sigy_ztopt = self.ztopt.x         
-        return self.sigx_ztopt,self.sigy_ztopt,self.coef,self.Expected,self.ztopt.fun;
-    
-    def NO_optimize_ZT(self,init_ztparams):
-        '''Using Gaussian sigma to estimate ZT scaling parameter and skipping optimization'''
-        self.init_ztparams = [init_ztparams[0]/3,init_ztparams[1]/3]
-        self.zt_chisq(self.init_ztparams)
-        return self.init_ztparams[0],self.init_ztparams[1],self.coef,np.abs(self.Expected);
+        self.ztopt = minimize(self.zt_chisq, self.init_ztparams,
+                              callback=self.callback,
+                              method=minimize_method,
+                              options={'disp': True, 'maxiter': maxiter, 'xtol': xtol})
+        self.sigx_ztopt, self.sigy_ztopt = self.ztopt.x
+        return self.sigx_ztopt, self.sigy_ztopt, self.coef, self.Expected, self.ztopt.fun
 
-    def plot_results_cart(self,data,model,freq,N,x,y,plot_format,plot_directory):
-        ms=1.5
-        vmin=None
-        vmax=None
+    def NO_optimize_ZT(self, init_ztparams):
+        """Estimate ZT scaling parameter skipping optimization."""
+        self.init_ztparams = [init_ztparams[0] / 2, init_ztparams[1] / 2]
+        self.zt_chisq(self.init_ztparams)
+        return self.init_ztparams[0], self.init_ztparams[1], self.coef, np.abs(self.Expected)
+
+    def plot_results_cart(self, data, model, freq, N, x, y, plot_format, plot_directory):
+        ms = 1.5
+        vmin = None
+        vmax = None
         residue = data - model
         extent = [x.min(), x.max(), y.min(), y.max()]
-        #plot 2D cst,fit and residue and x and y Cuts
-        plt.figure(figsize=(12,6))
+        plt.figure(figsize=(12, 6))
         ax1 = plt.subplot(131)
         ax2 = plt.subplot(132)
         ax3 = plt.subplot(133)
-        
-        z1_plot=ax1.imshow(np.log(data),cmap='inferno',vmin=vmin,vmax=vmax,extent=extent)
+
+        z1_plot = ax1.imshow(np.log(data), cmap='inferno', vmin=vmin, vmax=vmax, extent=extent)
         ax1.grid(False)
-        plt.colorbar(z1_plot,ax=ax1,fraction=0.047)
+        plt.colorbar(z1_plot, ax=ax1, fraction=0.047)
         ax1.set_title("Simulated CST beam")
-        z2_plot=ax2.imshow(np.log(model),cmap='inferno',vmin=vmin,vmax=vmax,extent=extent)
+
+        z2_plot = ax2.imshow(np.log(model), cmap='inferno', vmin=vmin, vmax=vmax, extent=extent)
         ax2.grid(False)
-        plt.colorbar(z2_plot,ax=ax2,fraction=0.047)
-        ax2.set_title("Fit with "+str(N)+" basis functions")
+        plt.colorbar(z2_plot, ax=ax2, fraction=0.047)
+        ax2.set_title(f"Fit with {N} basis functions")
         ax2.get_yaxis().set_visible(False)
-        z3_plot=ax3.imshow(residue,cmap='seismic',vmin=vmin,vmax=vmax,extent=extent)
+
+        z3_plot = ax3.imshow(residue, cmap='seismic', vmin=vmin, vmax=vmax, extent=extent)
         ax3.grid(False)
-        plt.colorbar(z3_plot,ax=ax3,fraction=0.047)
+        plt.colorbar(z3_plot, ax=ax3, fraction=0.047)
         ax3.set_title("Abs Residue")
         ax3.get_yaxis().set_visible(False)
+
         plt.tight_layout()
-        plotname = "BeamFitResults_"+str(freq)+"MHz with N="+str(N)+plot_format
+        plotname = f"BeamFitResults_{freq}MHz with N={N}{plot_format}"
         new_dir = os.path.join(os.getcwd(), plot_directory)
         os.makedirs(new_dir, exist_ok=True)
         print("Making the plot.....")
         plt.savefig(os.path.join(new_dir, plotname), bbox_inches='tight', dpi=300)
         plt.clf()
+        plt.close('all')
 
 
-    def plot_results_polar(self,data,model,freq,N,rho,phi ,plot_format,plot_directory):
-        ms=1.5
-        vmin=None
-        vmax=None
+    def plot_results_polar(self, data, model, freq, N, rho, phi, plot_format, plot_directory):
+        ms = 1.5
+        vmin = None
+        vmax = None
         residue = data - model
+        plt.figure(figsize=(12, 6))
+        ax1 = plt.subplot(131, projection='polar')
+        ax2 = plt.subplot(132, projection='polar')
+        ax3 = plt.subplot(133, projection='polar')
 
-        #plot 2D cst,fit and residue and x and y Cuts
-        plt.figure(figsize=(12,6))
-        ax1 = plt.subplot(131,projection='polar')
-        ax2 = plt.subplot(132,projection='polar')
-        ax3 = plt.subplot(133,projection='polar')
-        
-        z1_plot=ax1.scatter(phi,rho,c=np.log(data),cmap='inferno',s=ms,vmin=vmin,vmax=vmax)
+        z1_plot = ax1.scatter(phi, rho, c=np.log(data), cmap='inferno', s=ms, vmin=vmin, vmax=vmax)
         ax1.grid(False)
-        plt.colorbar(z1_plot,ax=ax1,fraction=0.047)
+        plt.colorbar(z1_plot, ax=ax1, fraction=0.047)
         ax1.set_title("Simulated CST beam")
-        z2_plot=ax2.scatter(phi,rho,c=np.log(model),cmap='inferno',s=ms,vmin=vmin,vmax=vmax)
+
+        z2_plot = ax2.scatter(phi, rho, c=np.log(model), cmap='inferno', s=ms, vmin=vmin, vmax=vmax)
         ax2.grid(False)
-        plt.colorbar(z2_plot,ax=ax2,fraction=0.047)
-        ax2.set_title("Fit with "+str(N)+" basis functions")
+        plt.colorbar(z2_plot, ax=ax2, fraction=0.047)
+        ax2.set_title(f"Fit with {N} basis functions")
         ax2.get_yaxis().set_visible(False)
-        z3_plot=ax3.scatter(phi,rho,c=(residue),cmap='seismic',s=ms,vmin=vmin,vmax=vmax)
+
+        z3_plot = ax3.scatter(phi, rho, c=residue, cmap='seismic', s=ms, vmin=vmin, vmax=vmax)
         ax3.grid(False)
-        plt.colorbar(z3_plot,ax=ax3,fraction=0.047)
+        plt.colorbar(z3_plot, ax=ax3, fraction=0.047)
         ax3.set_title("Abs Residue")
         ax3.get_yaxis().set_visible(False)
+
         plt.tight_layout()
-        plotname = "BeamFitResults_"+str(freq)+"MHz with N="+str(N)+plot_format
+        plotname = f"BeamFitResults_{freq}MHz with N={N}{plot_format}"
         new_dir = os.path.join(os.getcwd(), plot_directory)
         os.makedirs(new_dir, exist_ok=True)
         print("Making the plot.....")

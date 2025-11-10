@@ -1,7 +1,6 @@
 #Fit gaussian/Zernikes to EMsims or Drone data 
 #Returns fit parameters (gaussian parameters or Zernike Coefficients) and model beam.
 
-
 from lib import *
 #read config_fit.yaml file
 with open('config_fit.yaml', 'r') as file:
@@ -22,17 +21,18 @@ print("Telescope:", telescope_name)
 print("Frequency channel (MHz):", config['frequency'])
 
 #Initialize GaussianFit class
-gfit = GaussianFit(datafile,freq,error_type=config['gaussian_error_type'],normalize_data=config['normalize_data'])
+gfit = GaussianFit(datafile,freq,error_type=config['gaussian_error_type'],normalize_data=config['normalize_data'],coord_type=config['coord_type'])
 print("Data loaded. Shape of observed data:", gfit.data.shape)
+
 #Optimize Gaussian fit
 print("Starting Gaussian fit optimization...")
 
-x,y,xo,yo,freq_arr,freq,sigx_gopt,sigy_gopt,gExpected,data,_= gfit.optimize_Gauss(init_gparams,minimize_method = config['gminimize_method'],xtol=config['gtol'],maxiter=config['gmaxiter'],verbose=config['gverbose'])
+x,y,xo,yo,freq_arr,freq,sigx_gopt,sigy_gopt,gExpected,data,_= gfit.optimize_Gauss(init_gparams,minimize_method = config['gminimize_method'],xtol=config['gtol'],verbose=config['gverbose'])
 print("Gaussian fit completed. Optimized sigx:", sigx_gopt, "sigy:", sigy_gopt)
 
 #Generate Zernike basis
 print("Generating Zernike basis...")
-ztfit = ZernikeFit(x,y,xo,yo,freq_arr,freq,data,config['N'],error_type=config['zernike_error_type'],normalize_data=config['normalize_data'])
+ztfit = ZernikeFit(x,y,xo,yo,freq_arr,freq,data,config['N'],error_type=config['zernike_error_type'],normalize_data=config['normalize_data'],coord_type=config['coord_type'])
 
 #Fit data to Zernike basis
 init_ztparams = [sigx_gopt,sigy_gopt] # Use optimized Gaussian sigmas as initial guess for Zernike fit
