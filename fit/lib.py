@@ -149,6 +149,7 @@ class GaussianFit:
                              callback=self.callback,
                              method=minimize_method,
                              options={'disp': verbose})
+        self.pbar.close()
         # Ignore "max iterations exceeded" silently
         if getattr(self.gopt, "status", None) == 1:
             pass
@@ -271,6 +272,7 @@ class ZernikeFit:
                               callback=self.callback,
                               method=minimize_method,
                               options={'disp': True, 'maxiter': maxiter, 'xtol': xtol})
+        self.pbar.close() 
         self.sigx_ztopt, self.sigy_ztopt = self.ztopt.x
         return self.sigx_ztopt, self.sigy_ztopt, self.coef, self.Expected, self.ztopt.fun
 
