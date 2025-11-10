@@ -9,6 +9,8 @@
   datafile: "/Users/ajithsampath/SwissPostdoc/samplecube.npz"  # path to the input data file (FITS, HDF5, NPY, NPZ, or TXT format)
   normalize_data: True     # whether to normalize the data before fitting
   coord_type: 'auto'        # type of coordinate system the data is in. Options are "cartesian", "polar" or "auto"8
+  
+  #Gaussian Fit paramters
   gaussian_error_type: "uniform"      # type of error to use in Gaussian fitting, options are "uniform" or "proportional"
   init_gparams: [1.0, 1.0, 1.0,0,0,0]  # Initial guess for Gaussian fit parameters [Amplitude, sigx, sigy, xoffset, yoffset, tilt]
   gminimize_method: "Nelder-Mead"  # minimization method for Gaussian fit, options are "L-BFGS-B", "Nelder-Mead", "Powell", etc.

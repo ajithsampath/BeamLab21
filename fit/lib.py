@@ -17,8 +17,6 @@ import h5py
 import pandas as pd
 from astropy.io import fits
 from tqdm import tqdm
-import warnings
-warnings.filterwarnings("ignore", category=OptimizeWarning)
 
 
 def NollToQuantum(j):
