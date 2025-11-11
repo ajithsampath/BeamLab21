@@ -2,6 +2,7 @@
 #Returns fit parameters (gaussian parameters or Zernike Coefficients) and model beam.
 
 from lib import *
+
 #read config_fit.yaml file
 with open('config_fit.yaml', 'r') as file:
     config = yaml.safe_load(file)
@@ -10,11 +11,13 @@ telescope_name = config['Telescope_name']
 datafile = config['datafile']
 freq = config['frequency']
 
-output_name = config['output_filename']+config['output_format']
 plot_results = config['plot_results']
 plot_format = config['plot_format']
 plot_directory = config['plot_directory']
 init_gparams = np.array(config['init_gparams'])  # Initial guess for Gaussian sigmas in arcminutes
+
+save_outputs = config['save_outputs']
+output_name = config['output_filename']+config['output_format']
 
 print("Fitting data from file:", datafile)
 print("Telescope:", telescope_name)
@@ -49,7 +52,15 @@ else:
 
 #Save fit parameters to csv file
 np.savetxt(output_name, coef, delimiter=",")
+
 #Plot results
 if plot_results:
     ztfit.plot_results_cart(gfit.data,model_beam,freq,config['N'],x,y,plot_format,plot_directory) 
     print("Plotted and saved...!!!")
+else:
+    print("The results are not plotted and hence not saved..!!!")
+
+if save_outputs:
+    np.save("../outputs/"+output_name,x=x,y=y,xo=xo,yo=yo,model=model_beam)
+else:
+    print("Fitted model is not saved! Set save_outputs parameters to True in the config_fit.yaml file :)")
