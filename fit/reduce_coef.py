@@ -1,7 +1,7 @@
 #Author: Ajith Sampath
 #Affiliation: University of Geneva
 
-from lib import *
+from ..lib import *
 
 with open('config_fit.yaml', 'r') as file:
     config = yaml.safe_load(file)

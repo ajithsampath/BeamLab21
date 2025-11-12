@@ -4,7 +4,7 @@
 #Fit gaussian/Zernikes to EMsims or Drone data 
 #Returns fit parameters (gaussian parameters or Zernike Coefficients) and model beam.
 
-from BEACH.lib import *
+from ..lib import *
 
 #read config_fit.yaml file
 with open('config_fit.yaml', 'r') as file:
