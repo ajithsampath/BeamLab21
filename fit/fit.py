@@ -8,8 +8,11 @@ with open('config_fit.yaml', 'r') as file:
     config = yaml.safe_load(file)
 telescope_name = config['Telescope_name']
 
-datafile = config['datafile']
+data_dir = config["data_dir"]
+datafile = data_dir+config['datafile']
 freq = config['frequency']
+fac = config['fac']
+
 
 plot_results = config['plot_results']
 plot_format = config['plot_format']
@@ -17,7 +20,12 @@ plot_directory = config['plot_directory']
 init_gparams = np.array(config['init_gparams'])  # Initial guess for Gaussian sigmas in arcminutes
 
 save_outputs = config['save_outputs']
+output_dir = config['output_dir']
 output_name = config['output_filename']+config['output_format']
+
+save_coef = config["save_coef"]
+coef_filename = config["coef_filename"]
+coef_format = config["coef_format"]
 
 print("Fitting data from file:", datafile)
 print("Telescope:", telescope_name)
@@ -41,7 +49,7 @@ ztfit = ZernikeFit(x,y,xo,yo,freq_arr,freq,data,config['N'],error_type=config['z
 init_ztparams = [sigx_gopt,sigy_gopt] # Use optimized Gaussian sigmas as initial guess for Zernike fit
 
 if config['skip_minimise']:
-    sigx,sigy,coef,model_beam= ztfit.NO_optimize_ZT(init_ztparams)
+    sigx,sigy,coef,model_beam= ztfit.NO_optimize_ZT(init_ztparams,fac)
 
 else:
     print("Starting Zernike fit optimization by varying scaling parameters...")
@@ -51,7 +59,8 @@ else:
 
 
 #Save fit parameters to csv file
-np.savetxt(output_name, coef, delimiter=",")
+if save_coef:
+    np.savetxt("../outputs/"+coef_filename+coef_format, coef, delimiter=",")
 
 #Plot results
 if plot_results:
@@ -61,6 +70,6 @@ else:
     print("The results are not plotted and hence not saved..!!!")
 
 if save_outputs:
-    np.save("../outputs/"+output_name,x=x,y=y,xo=xo,yo=yo,model=model_beam)
+    np.savez("../outputs/"+output_name,x=x,y=y,xo=xo,yo=yo,model=model_beam)
 else:
     print("Fitted model is not saved! Set save_outputs parameters to True in the config_fit.yaml file :)")

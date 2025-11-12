@@ -233,7 +233,7 @@ class ZernikeFit:
         count = 0
         for j in range(0, self.N):
             n, m = NollToQuantum(j)
-            if n >= 0 and n >= abs(m) and (n - abs(m)) % 2 == 0:
+            if n >= 0 and n >= abs(m) and (n - abs(m)) % 2 == 0 and m >= 0:
                 Bes = (jn(n + 1, rm)) / rm
                 nc = (((2 * n + 1) * (2 * n + 3) * (2 * n + 5)) / (-1) ** n) ** 0.5
                 temp = np.real(
@@ -274,9 +274,9 @@ class ZernikeFit:
         self.sigx_ztopt, self.sigy_ztopt = self.ztopt.x
         return self.sigx_ztopt, self.sigy_ztopt, self.coef, self.Expected, self.ztopt.fun
 
-    def NO_optimize_ZT(self, init_ztparams):
+    def NO_optimize_ZT(self, init_ztparams,fac):
         """Estimate ZT scaling parameter skipping optimization."""
-        self.init_ztparams = [init_ztparams[0] / 2, init_ztparams[1] / 2]
+        self.init_ztparams = [init_ztparams[0] / fac, init_ztparams[1] / fac]
         self.zt_chisq(self.init_ztparams)
         return self.init_ztparams[0], self.init_ztparams[1], self.coef, np.abs(self.Expected)
 
