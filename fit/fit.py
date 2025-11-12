@@ -5,20 +5,24 @@
 #Returns fit parameters (gaussian parameters or Zernike Coefficients) and model beam.
 
 from ..lib import *
+from BEACH import ROOT_DIR
 
 #read config_fit.yaml file
-with open('config_fit.yaml', 'r') as file:
+yamlpath = os.path.join(ROOT_DIR, 'fit', 'config_fit.yaml')
+
+with open(yamlpath, 'r') as file:
     config = yaml.safe_load(file)
+
+#read in necessary parameters    
 telescope_name = config['Telescope_name']
 
-data_dir = config["data_dir"]
-datafile = data_dir+config['datafile']
+datafile = os.path.join(ROOT_DIR,config["data_dir"],config['datafile'])
 freq = config['frequency']
 fac = config['fac']
 
 plot_results = config['plot_results']
 plot_format = config['plot_format']
-plot_directory = config['plot_directory']
+plot_directory = os.path.join(ROOT_DIR,config['plot_directory'])
 init_gparams = np.array(config['init_gparams'])  # Initial guess for Gaussian sigmas in arcminutes
 
 save_outputs = config['save_outputs']
@@ -26,8 +30,7 @@ output_dir = config['output_dir']
 output_name = config['output_filename']+config['output_format']
 
 save_coef = config["save_coef"]
-coef_filename = config["coef_filename"]
-coef_format = config["coef_format"]
+coef_filename = config["out_coef_filename"]
 
 print("Fitting data from file:", datafile)
 print("Telescope:", telescope_name)
@@ -62,8 +65,13 @@ else:
 
 #Save fit parameters to csv file
 if save_coef:
-    np.savetxt("../outputs/"+coef_filename+coef_format, coef, delimiter=",")
+    cf = pd.DataFrame({"coef_full": coef})
+    coef_filename = os.path.join(ROOT_DIR,output_dir,coef_filename)
+    cf.to_csv(coef_filename, index=False)
 
+    df = pd.DataFrame({"freq(MHz)": [freq], "sigx": [sigx], "sigy": [sigy]})
+    os.path.join(ROOT_DIR,output_dir)
+    df.to_csv(os.path.join(ROOT_DIR,output_dir,"scaleparameters.csv"), index=False)
 #Plot results
 if plot_results:
     ztfit.plot_results_cart(gfit.data,model_beam,freq,config['N'],x,y,plot_format,plot_directory) 
@@ -72,6 +80,6 @@ else:
     print("The results are not plotted and hence not saved..!!!")
 
 if save_outputs:
-    np.savez("../outputs/"+output_name,x=x,y=y,xo=xo,yo=yo,model=model_beam)
+    np.savez(os.path.join(ROOT_DIR,output_dir,output_name),x=x,y=y,xo=xo,yo=yo,model=model_beam)
 else:
     print("Fitted model is not saved! Set save_outputs parameters to True in the config_fit.yaml file :)")

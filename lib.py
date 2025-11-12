@@ -17,6 +17,7 @@ import h5py
 import pandas as pd
 from astropy.io import fits
 from tqdm import tqdm
+from BEACH import ROOT_DIR
 
 
 def NollToQuantum(j):
@@ -242,16 +243,21 @@ class ZernikeFit:
 
         self.Basis = np.zeros((int(self.N), int(len(rm.flatten()))), dtype="float32")
         count = 0
-        for j in range(0, self.N):
-            n, m = NollToQuantum(j)
-            if n >= 0 and n >= abs(m) and (n - abs(m)) % 2 == 0 and m >= 0:
-                Bes = (jn(n + 1, rm)) / rm
-                nc = (((2 * n + 1) * (2 * n + 3) * (2 * n + 5)) / (-1) ** n) ** 0.5
-                temp = np.real(
-                    (nc * (np.exp(1j * m * thetam)) / ((1j ** m) * 2 * np.pi) * (-1) ** ((n - m) // 2) * Bes)
-                )
-                self.Basis[count] = temp.flatten()
-                count += 1
+        print(f"Constructing the full basis set for the given N={self.N}...")
+        with tqdm(total=100, bar_format='{l_bar}{bar}| [{elapsed}] {postfix}') as pbar:
+            for j in range(0, self.N):
+                n, m = NollToQuantum(j)
+                if n >= 0 and n >= abs(m) and (n - abs(m)) % 2 == 0 and m >= 0:
+                    Bes = (jn(n + 1, rm)) / rm
+                    nc = (((2 * n + 1) * (2 * n + 3) * (2 * n + 5)) / (-1) ** n) ** 0.5
+                    temp = np.real(
+                        (nc * (np.exp(1j * m * thetam)) / ((1j ** m) * 2 * np.pi) * (-1) ** ((n - m) // 2) * Bes)
+                    )
+                    self.Basis[count] = temp.flatten()
+                    count += 1
+                pbar.update(100 / self.N)
+                pct = round(pbar.n, 1)
+                pbar.set_postfix_str(f'{pct}%')
 
     def zt_chisq(self, params):
         """Compute chi-squared for Zernike fit."""
@@ -321,10 +327,8 @@ class ZernikeFit:
 
         plt.tight_layout()
         plotname = f"BeamFitResults_{freq}MHz with N={N}{plot_format}"
-        new_dir = os.path.join(os.getcwd(), plot_directory)
-        os.makedirs(new_dir, exist_ok=True)
         print("Making the plot.....")
-        plt.savefig(os.path.join(new_dir, plotname), bbox_inches='tight', dpi=300)
+        plt.savefig(os.path.join(ROOT_DIR, plot_directory, plotname), bbox_inches='tight', dpi=300)
         plt.clf()
         plt.close('all')
 
@@ -357,11 +361,10 @@ class ZernikeFit:
         ax3.get_yaxis().set_visible(False)
 
         plt.tight_layout()
+        
         plotname = f"BeamFitResults_{freq}MHz with N={N}{plot_format}"
-        new_dir = os.path.join(os.getcwd(), plot_directory)
-        os.makedirs(new_dir, exist_ok=True)
         print("Making the plot.....")
-        plt.savefig(os.path.join(new_dir, plotname), bbox_inches='tight', dpi=300)
+        plt.savefig(os.path.join(ROOT_DIR, plot_directory, plotname), bbox_inches='tight', dpi=300)
         plt.clf()
         plt.close('all')
 
@@ -378,12 +381,15 @@ class GenBeam:
         '''Routine to load coefficients from csv file'''
         if coeffile.endswith('.csv'):
             df = pd.read_csv(coeffile)
-            self.coef = df['Coefficient'].values  # assuming the entire CSV is the data
-        elif coeffile.endswith('.npy'):
-            self.coef = np.load(coeffile)
+            self.coef = df['coef'].values  # assuming the entire CSV is the data
+            self.j = df['j'].values
+            self.n = df['n'].values
+            self.m = df['m'].values
         else:
-            raise ValueError("Unsupported file format. Please use .csv or .npy/.npz files.")
-        return self.coef; 
+            raise ValueError("Unsupported file format. Please use .csv files for Coefficients.")
+        
+        
+        return None; 
         
     def basis_j(self,params):
         '''Routine to generate Zernike Transforms (basis) from Bessel function of first kind to generate beam from coefficients'''

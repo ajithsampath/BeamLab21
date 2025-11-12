@@ -8,7 +8,7 @@
   aperture_diameter: 6.0   # aperture diameter in meters, default for Hirax is 6m
 
   # Data parameters
-  data_dir: "../data/"
+  data_dir: "data"
   datafile: "samplecube.npz"  # path to the input data file (FITS, HDF5, NPY, NPZ, or TXT format)
   normalize_data: True     # whether to normalize the data before fitting
   coord_type: 'auto'        # type of coordinate system the data is in. Options are "cartesian", "polar" or "auto"8
@@ -32,21 +32,20 @@
   #plotting paramters
   plot_results: True      # whether to plot the fitting results
   plot_format: ".png"      # format for saving plots, options are "png", "pdf", etc.
-  plot_directory: "../outputs/" # directory to save plots
+  plot_directory: "outputs" # directory to save plots
 
   #save full coefficients
   save_coef: True
-  coef_filename: "Coef_full"
-  coef_format: ".csv"
-
+  out_coef_dir: "outputs"
+  out_coef_filename: "Coef_full.csv"
   # Output parameters
   save_outputs: True        # whether to save the fitting results to a file
-  output_dir : "../outputs/"
+  output_dir : "outputs"
   output_filename: "testbeam"  # output file name
   output_format: ".npz"      # output file format, options are "hdf5" or "npy"
 
-
   # Reduce coeff by ranking
   reduce_coef: True
-  coef_redname: "../outputs/Coef_full.csv"
+  in_coef_dir: "outputs"
+  in_coef_filename: "Coef_full.csv"
   percentage_energy: 99

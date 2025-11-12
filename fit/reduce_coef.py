@@ -1,15 +1,22 @@
 #Author: Ajith Sampath
 #Affiliation: University of Geneva
 
-from ..lib import *
+from BEACH.lib import *
+from BEACH import ROOT_DIR
 
-with open('config_fit.yaml', 'r') as file:
+#read config_fit.yaml file
+yamlpath = os.path.join(ROOT_DIR, 'fit', 'config_fit.yaml')
+
+with open(yamlpath, 'r') as file:
     config = yaml.safe_load(file)
 
-coef_redname = config['coef_redname']
-output_dir = config['output_dir']
+in_coef_name = os.path.join(ROOT_DIR,config['in_coef_dir'],config['in_coef_filename']) 
+
+df = pd.read_csv(in_coef_name)
+coef = df["coef"].to_numpy() 
+
 #reorder the coef as per their corresponding Noll indices
-coef = reorder_coef(np.loadtxt(coef_redname))
+coef = reorder_coef((coef))
 
 #generate Noll indices
 j = np.arange(len(coef))
@@ -43,4 +50,5 @@ selected_indices = sorted_indices[:num_coefs]
 selected_df = df_coef.iloc[selected_indices]
 selected_df = selected_df.sort_index()
 
-selected_df.to_csv(output_dir+'coef_test.csv', index=False)
+out_coef_name = os.path.join(ROOT_DIR,config['out_coef_dir'],'coef_test.csv')
+selected_df.to_csv(out_coef_name, index=False)
