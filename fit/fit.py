@@ -16,7 +16,6 @@ datafile = data_dir+config['datafile']
 freq = config['frequency']
 fac = config['fac']
 
-
 plot_results = config['plot_results']
 plot_format = config['plot_format']
 plot_directory = config['plot_directory']
