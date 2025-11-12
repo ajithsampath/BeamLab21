@@ -1,6 +1,6 @@
 #Author: Ajith Sampath
 #Affiliation: University of Geneva
-#Project: BEACH - HIRAX Beam package
+#Project: HIRAX Beam package
 
 #lib.py file for all the helper functions
 
