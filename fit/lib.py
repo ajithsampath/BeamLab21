@@ -41,17 +41,17 @@ def twoD_Gaussian(x,y,params):
     return amp*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo) + c*((y-yo)**2)));
 
         
-def reorder_coef(coef_filename):
-    coef = np.loadtxt(coef_filename)
+def reorder_coef(coef):
+    
     neg_m_list = []
     for j in range(coef.shape[0]):
         [n,m]=NollToQuantum(j)
         if m<0:
             neg_m_list.append(j)
     for g in neg_m_list:
-        coef_reorder=np.delete(coef, -1)
-        coef_reorder=np.insert(coef_reorder,g,0.0)
-    return coef_reorder;
+        coef=np.delete(coef, -1)
+        coef=np.insert(coef,g,0.0)
+    return coef;
 
 
 
