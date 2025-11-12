@@ -46,5 +46,5 @@
 
   # Reduce coeff by ranking
   reduce_coef: True
-  coef_filename: "../outputs/Coef_full.csv"
+  coef_redname: "../outputs/Coef_full.csv"
   percentage_energy: 99

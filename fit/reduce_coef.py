@@ -4,8 +4,8 @@ with open('config_fit.yaml', 'r') as file:
     config = yaml.safe_load(file)
 
 
-coef_filename = config['coef_filename']
-coef = reorder_coef(coef_filename)
+coef_redname = config['coef_redname']
+coef = reorder_coef(np.loadtxt(coef_redname))
 
 j = np.arange(len(coef))
 
