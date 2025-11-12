@@ -19,9 +19,9 @@
   gverbose: True           # whether to print detailed logs during Gaussian fitting
 
   zernike_error_type: "proportional"       # type of error to use in Zernike fitting, options are "uniform", "proportional", or "custom"
-  N: 600                    # number of Zernike polynomials to fit, default is 15
+  N: 1500                    # number of Zernike polynomials to fit, default is 15
   skip_minimise: True
-  fac: 2              #factor to change Gaussian sigma to ZT scaling parameter
+  fac: 2.5              #factor to change Gaussian sigma to ZT scaling parameter
   ztminimize_method: "Nelder-Mead"  # minimization method, options are "L-BFGS-B", "Nelder-Mead", "Powell", etc.
   ztmaxiter: 10           # maximum number of iterations for the Zernike minimization algorithm
   zttol: 1e-6               # tolerance for termination of the Zernike minimization algorithm
@@ -30,7 +30,7 @@
   #plotting paramters
   plot_results: True      # whether to plot the fitting results
   plot_format: ".png"      # format for saving plots, options are "png", "pdf", etc.
-  plot_directory: "plots" # directory to save plots
+  plot_directory: "../outputs/" # directory to save plots
 
   #save full coefficients
   save_coef: True
@@ -46,4 +46,5 @@
 
   # Reduce coeff by ranking
   reduce_coef: True
+  coef_filename: "Coef_full.csv"
   percentage_energy: 99

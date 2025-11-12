@@ -41,6 +41,18 @@ def twoD_Gaussian(x,y,params):
     return amp*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo) + c*((y-yo)**2)));
 
         
+def reorder_coef(coef_filename):
+    coef = np.loadtxt(coef_filename)
+    neg_m_list = []
+    for j in range(coef.shape[0]):
+        [n,m]=NollToQuantum(j)
+        if m<0:
+            neg_m_list.append(j)
+    for g in neg_m_list:
+        coef_reorder=np.delete(coef, -1)
+        coef_reorder=np.insert(coef_reorder,g,0.0)
+    return coef_reorder;
+
 
 
 def load_beam(datafile,error_type='uniform',normalize_data=True):
@@ -53,10 +65,6 @@ def load_beam(datafile,error_type='uniform',normalize_data=True):
     elif datafile.endswith('.npz'):
         data = np.load(datafile)['data']
         data[np.isnan(data)] = 0.0
-        if normalize_data:
-            data = data/np.max(data)
-        else:
-            data = data               
 
         x = np.load(datafile)['x']
         y = np.load(datafile)['y']
@@ -112,7 +120,10 @@ class GaussianFit:
 
         dfreq = np.abs(self.freq_arr[1] - self.freq_arr[0])
         self.data = self.data_cube[int((freq - 400) / dfreq)]
-
+        if normalize_data:
+            self.data = self.data/np.max(self.data)
+        else:
+            self.data = self.data  
         if self.error is None:
             if error_type == 'uniform':
                 self.error = np.ones_like(self.data)
@@ -302,10 +313,10 @@ class ZernikeFit:
         ax2.set_title(f"Fit with {N} basis functions")
         ax2.get_yaxis().set_visible(False)
 
-        z3_plot = ax3.imshow(residue, cmap='seismic', vmin=vmin, vmax=vmax, extent=extent)
+        z3_plot = ax3.imshow((residue/model)*100, cmap='seismic', vmin=vmin, vmax=vmax, extent=extent)
         ax3.grid(False)
         plt.colorbar(z3_plot, ax=ax3, fraction=0.047)
-        ax3.set_title("Abs Residue")
+        ax3.set_title("Percentage Residuals")
         ax3.get_yaxis().set_visible(False)
 
         plt.tight_layout()
@@ -339,10 +350,10 @@ class ZernikeFit:
         ax2.set_title(f"Fit with {N} basis functions")
         ax2.get_yaxis().set_visible(False)
 
-        z3_plot = ax3.scatter(phi, rho, c=residue, cmap='seismic', s=ms, vmin=vmin, vmax=vmax)
+        z3_plot = ax3.scatter(phi, rho, c=(residue/model)*100, cmap='seismic', s=ms, vmin=vmin, vmax=vmax)
         ax3.grid(False)
         plt.colorbar(z3_plot, ax=ax3, fraction=0.047)
-        ax3.set_title("Abs Residue")
+        ax3.set_title("Percentage Residual")
         ax3.get_yaxis().set_visible(False)
 
         plt.tight_layout()
