@@ -6,9 +6,8 @@ from lib import *
 with open('config_fit.yaml', 'r') as file:
     config = yaml.safe_load(file)
 
-
 coef_redname = config['coef_redname']
-
+output_dir = config['output_dir']
 #reorder the coef as per their corresponding Noll indices
 coef = reorder_coef(np.loadtxt(coef_redname))
 
@@ -27,7 +26,7 @@ df_coef = pd.DataFrame(coef_jnm, columns=['j','n','m','coef'])
 
 coefs = df_coef.iloc[:, 3].values
 
-# Sort indices by absolute value of 4th column, descending
+# Sort indices by absolute value of coefficient, in descending order
 sorted_indices = np.argsort(np.abs(coefs))[::-1]
 
 # Calculate cumulative contribution ratio 
@@ -35,7 +34,7 @@ sorted_coefs = coefs[sorted_indices]
 cumulative_contrib = np.cumsum(np.abs(sorted_coefs)) / np.sum(np.abs(sorted_coefs))
 
 # Find how many coefficients to keep for 99% contribution
-num_coefs = np.searchsorted(cumulative_contrib, 0.99) + 1
+num_coefs = np.searchsorted(cumulative_contrib, config['percentage_energy']/100) + 1
 
 # Select indices of top coefficients
 selected_indices = sorted_indices[:num_coefs]
@@ -44,4 +43,4 @@ selected_indices = sorted_indices[:num_coefs]
 selected_df = df_coef.iloc[selected_indices]
 selected_df = selected_df.sort_index()
 
-selected_df.to_csv('coef_test.csv', index=False)
+selected_df.to_csv(output_dir+'coef_test.csv', index=False)

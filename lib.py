@@ -2,7 +2,7 @@
 #Affiliation: University of Geneva
 #Project: HIRAX Beam package
 
-#lib.py file for all the helper functions
+#lib.py file for all the helper functions and classes
 
 import numpy as np
 from scipy.special import jn
