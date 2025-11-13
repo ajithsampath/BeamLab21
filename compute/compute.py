@@ -5,5 +5,55 @@
 #Return HIRAX beam model
 
 from BeamLab21.lib import *
+from BeamLab21 import ROOT_DIR
+
+#read config_compute.yaml file
+yamlpath = os.path.join(ROOT_DIR, 'compute', 'config_compute.yaml')
+
+with open(yamlpath, 'r') as file:
+    config = yaml.safe_load(file)
+
+freq = config['freq']
+c = 3e8
+wvl = c/(freq*1e6)
+Deff = 4.6
+
+angextent = config['pixels']*config['angular_res']
+x = np.linspace(-angextent/2,angextent/2,config['pixels'])
+y = x
+
+dtype = config['dtype']
+scaleparamfile = os.path.join(ROOT_DIR,config['scaleparam_dir'],config['scaleparam_file']) 
+coeffile = os.path.join(ROOT_DIR,config['coef_dir'],config['coef_file']) 
+
+if config['gen_gaussian_model']:
+    amp = config['gaussian_amp']
+    lambdabyDcoef = config['gaussian_lamdabyD_coef']
+    sigx = np.rad2deg(lambdabyDcoef*(wvl/Deff))
+    sigy = sigx
+    xo,yo = config['gaussian_offset_x'],config['gaussian_offset_y']
+    tilt = config['gaussian_rotation']
+    gparams = amp, xo,yo,sigx,sigy,tilt
+    gmodel = twoD_Gaussian(x,y,gparams)
+
+    if config['add_noise2gaussian']:
+        np.random.seed(config['gaussian_noise_random_seed']) 
+        gnoise = np.random.normal(loc=config['gaussian_noise_mean'], scale=config['gaussian_noise_sigma'], size=gmodel.shape)
+    else:
+        gnoise = 0.0
+
+    gmodel = gmodel + gnoise
+
+    np.savez(f"GaussianMainLobeModel_{freq}MHz.npz",x=x,y=y,data=gmodel)
 
 
+elif config['gen_zernike_model']:
+    ztgen = GenZTBeam(freq,x,y,dtype)
+    ztsp_df = pd.read_csv(scaleparamfile)
+    sigx,sigy = ztsp_df['sigx'].to_numpy(),ztsp_df['sigy'].to_numpy()
+    ztgen.load_coef(coeffile)
+    ztgen.basisfunc(sigx,sigy)
+    ztmodel = ztgen.Basis.T @ ztgen.coef
+    print(ztmodel)
+    plt.imshow(ztmodel.reshape(256,256))
+    plt.savefig("testgauss.png")     

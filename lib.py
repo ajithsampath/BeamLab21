@@ -249,7 +249,7 @@ class ZernikeFit:
                 n, m = NollToQuantum(j)
                 if n >= 0 and n >= abs(m) and (n - abs(m)) % 2 == 0 and m >= 0:
                     Bes = (jn(n + 1, rm)) / rm
-                    nc = (((2 * n + 1) * (2 * n + 3) * (2 * n + 5)) / (-1) ** n) ** 0.5
+                    nc = np.abs(((2 * n + 1) * (2 * n + 3) * (2 * n + 5)) / (-1) ** n) ** 0.5
                     temp = np.real(
                         (nc * (np.exp(1j * m * thetam)) / ((1j ** m) * 2 * np.pi) * (-1) ** ((n - m) // 2) * Bes)
                     )
@@ -375,44 +375,46 @@ class ZernikeFit:
 
 #Generative Beam class
 
-class GenBeam:
-    def __init__(self,freq,x,y):
+class GenZTBeam:
+    def __init__(self,freq,x,y,dtype):
         '''Initializer to get all the parameters'''
         self.freq = freq
         self.x = x
-        self.y = y    
+        self.y = y
+        self.dtype = dtype
+
     def load_coef(self,coeffile):
         '''Routine to load coefficients from csv file'''
         if coeffile.endswith('.csv'):
             df = pd.read_csv(coeffile)
             self.coef = df['coef'].values  # assuming the entire CSV is the data
-            self.j = df['j'].values
-            self.n = df['n'].values
-            self.m = df['m'].values
+            self.j = (df['j'].to_numpy()).astype(int)
+            self.n = (df['n'].to_numpy()).astype(int)
+            self.m = (df['m'].to_numpy()).astype(int)
         else:
             raise ValueError("Unsupported file format. Please use .csv files for Coefficients.\n")
         
         
         return None; 
         
-    def basis_j(self,params):
+    def basisfunc(self,sigx,sigy):
         '''Routine to generate Zernike Transforms (basis) from Bessel function of first kind to generate beam from coefficients'''
-        self.sigx,self.sigy = params
+        self.sigx,self.sigy = sigx,sigy
         xm,ym = np.meshgrid(self.x/self.sigx,self.y/self.sigy)
         rm = np.hypot(xm,ym)
         rm[rm==0] = 1e-10
         thetam = np.arctan2(ym,xm)
 
-        self.Basis = np.zeros((len(self.coef),len(rm.flatten())),dtype="float64")
-        count = 0
-        for j in range(0,self.coef.shape[0]):
-            n,m = NollToQuantum(j)
-            if n>=0 and n>=abs(m) and (n-abs(m))%2==0:
-                Bes=(jn(n+1,rm))/rm
-                nc = (((2*n+1)*(2*n+3)*(2*n+5))/(-1)**n)**0.5
-                temp=np.real((nc*(np.exp(1j*m*thetam))/((1j**m)*2*np.pi) *(-1)**((n-m)/2) *Bes))
-                self.Basis[count]=temp.flatten()
-                count+=1
+        self.Basis = np.zeros((len(self.coef),len(rm.flatten())),dtype=self.dtype)
+        
+        for id in range(self.coef.shape[0]):
+            n=self.n[id]
+            m=self.m[id]
+            Bes=(jn(n+1,rm))/rm
+            nc = np.abs((((2*n+1)*(2*n+3)*(2*n+5))/(-1)**n))**0.5
+            print(nc)
+            temp=np.real((nc*(np.exp(1j*m*thetam))/((1j**m)*2*np.pi) *(-1)**((n-m)/2) *Bes))
+            self.Basis[id]=temp.flatten()
         return self.Basis;
 
 

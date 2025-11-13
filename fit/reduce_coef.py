@@ -13,7 +13,7 @@ with open(yamlpath, 'r') as file:
 in_coef_name = os.path.join(ROOT_DIR,config['in_coef_dir'],config['in_coef_filename']) 
 
 df = pd.read_csv(in_coef_name)
-coef = df["coef"].to_numpy() 
+coef = df["coef_full"].to_numpy() 
 
 #reorder the coef as per their corresponding Noll indices
 coef = reorder_coef((coef))
@@ -43,6 +43,8 @@ cumulative_contrib = np.cumsum(np.abs(sorted_coefs)) / np.sum(np.abs(sorted_coef
 # Find how many coefficients to keep for 99% contribution
 num_coefs = np.searchsorted(cumulative_contrib, config['percentage_energy']/100) + 1
 
+print(f"Coefficients are reordered and reduced to most dominant modes with {config['percentage_energy']}% contribution..! ")
+
 # Select indices of top coefficients
 selected_indices = sorted_indices[:num_coefs]
 
@@ -52,3 +54,6 @@ selected_df = selected_df.sort_index()
 
 out_coef_name = os.path.join(ROOT_DIR,config['out_coef_dir'],'reduced_coef.csv')
 selected_df.to_csv(out_coef_name, index=False)
+
+print("New coefficient file with Noll, Quantum indices and reduced Coefficients is written!")
+print(f"Check the file at {out_coef_name}")

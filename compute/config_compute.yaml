@@ -2,33 +2,37 @@
 
   # Telescope parameters
   Telescope_name: "Hirax"  # "Hirax" is the only supported option currently. This sets the aperture diameter and frequency range.
-  frequency: 400  # frequency range in Hz
+  freq: 400  # frequency range in Hz
 
   # Grid parameters
   pixels: 256       # number of pixels in x and y
-  angular_res: 3.413  # angular resolution in degrees. This sets the field of view (FOV = pixels * angular_res)
+  angular_res: 0.5858   # angular resolution in degrees. This sets the field of view (FOV = pixels * angular_res)
   
   # Output parameters
   output_filename: "testmodel"  # output file name
   output_format: ".npz"      # output file format, options are "npz" or "npy"
+  dtype: float32    # numpy data type for array, use float128 if supported
 
   # Gaussian model parameters
-  use_gaussian_model: False  # whether to use a Gaussian model for the beam instead of Zernike polynomials
+  gen_gaussian_model: False  # whether to use a Gaussian model for the beam instead of Zernike polynomials
   gaussian_lamdabyD_coef: 1.03         # Coefficient for lambda/D to set the FWHM of the Gaussian beam
   gaussian_amp: 1.0          # Amplitude of the Gaussian beam
   gaussian_offset_x: 0.0   # x offset of the Gaussian beam
   gaussian_offset_y: 0.0   # y offset of the Gaussian beam
   gaussian_rotation: 0.0     # rotation angle of the Gaussian beam in degrees
-  gaussian_amp_offset: 0.0       # Amplitude offset of the Gaussian beam
-  gaussian_noise: 0.0        # noise level to add to the Gaussian beam
+
+  add_noise2gaussian: False
   gaussian_noise_type: "normal" # type of noise to add, options are "normal" or "uniform"
+  gaussian_noise_mean: 0.0
+  gaussian_noise_sigma: 0.0        # noise level to add to the Gaussian beam
   gaussian_noise_random_seed: 42   # random seed for noise generation
 
   #Zernike model parameters
-  use_zernike_model: True  # whether to use Zernike polynomials for the beam
-  coef_dir: "../outputs/"
-  coef_file: "coef_reduced.csv" # input file with Zernike coefficients (in Noll notation). A sample file is provided.
-  dtype: float32    # numpy data type for array, use float128 if supported
+  gen_zernike_model: True  # whether to use Zernike polynomials for the beam
+  coef_dir: "outputs"
+  scaleparam_dir: "outputs"
+  coef_file: "reduced_coef.csv" # input file with Zernike coefficients (in Noll notation). A sample file is provided.
+  scaleparam_file: "scaleparameters.csv"
   zernike_normalization: True  # normalization for Zernike coefficients, options are True or False
   zernike_noise: 0.0  # noise level to add to Zernike model
   zernike_noise_type: "normal" # type of noise to add, options are "normal" or "uniform"
