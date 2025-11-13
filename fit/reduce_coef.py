@@ -1,8 +1,8 @@
 #Author: Ajith Sampath
 #Affiliation: University of Geneva
 
-from BEACH.lib import *
-from BEACH import ROOT_DIR
+from BeamLab21.lib import *
+from BeamLab21 import ROOT_DIR
 
 #read config_fit.yaml file
 yamlpath = os.path.join(ROOT_DIR, 'fit', 'config_fit.yaml')
@@ -50,5 +50,5 @@ selected_indices = sorted_indices[:num_coefs]
 selected_df = df_coef.iloc[selected_indices]
 selected_df = selected_df.sort_index()
 
-out_coef_name = os.path.join(ROOT_DIR,config['out_coef_dir'],'coef_test.csv')
+out_coef_name = os.path.join(ROOT_DIR,config['out_coef_dir'],'reduced_coef.csv')
 selected_df.to_csv(out_coef_name, index=False)

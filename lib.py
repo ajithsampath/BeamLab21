@@ -17,7 +17,7 @@ import h5py
 import pandas as pd
 from astropy.io import fits
 from tqdm import tqdm
-from BEACH import ROOT_DIR
+from BeamLab21 import ROOT_DIR
 
 
 def NollToQuantum(j):

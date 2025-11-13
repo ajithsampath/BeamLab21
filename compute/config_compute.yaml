@@ -9,7 +9,7 @@
   angular_res: 3.413  # angular resolution in degrees. This sets the field of view (FOV = pixels * angular_res)
   
   # Output parameters
-  output_filename: "testbeam"  # output file name
+  output_filename: "testmodel"  # output file name
   output_format: ".npz"      # output file format, options are "npz" or "npy"
 
   # Gaussian model parameters
