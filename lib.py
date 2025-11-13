@@ -128,10 +128,10 @@ class GaussianFit:
         if self.error is None:
             if error_type == 'uniform':
                 self.error = np.ones_like(self.data)
-                print("Proceeding with uniform error array...")
+                print("Proceeding with uniform error array...\n")
             else:
                 raise ValueError(
-                    "Error array not found. Provide error array or set error_type='uniform'."
+                    "Error array not found. Provide error array or set error_type='uniform'.\n"
                 )
 
     def callback(self, xk):
@@ -214,16 +214,16 @@ class ZernikeFit:
 
         if normalize_data:
             self.data = self.data / np.max(self.data)
-            print("Data normalized to maximum value.")
+            print("Data normalized to maximum value.\n")
         else:
-            print("Data not normalized.")
+            print("Data not normalized.\n")
 
         if error_type == 'proportional':
             self.error = np.abs(self.data) * 0.1
         elif error_type == 'uniform':
             self.error = np.ones_like(self.data)
         else:
-            raise ValueError("Unsupported error type. Use 'proportional' or 'uniform'.")
+            raise ValueError("Unsupported error type. Use 'proportional' or 'uniform'.\n")
 
     def basis_N(self, params):
         """Generate Zernike basis from Bessel functions to fit the data."""
@@ -243,7 +243,7 @@ class ZernikeFit:
 
         self.Basis = np.zeros((int(self.N), int(len(rm.flatten()))), dtype="float32")
         count = 0
-        print(f"Constructing the full basis set for the given N={self.N}...")
+        print(f"Constructing the full basis set for the given N={self.N} and scaling parameters = [{np.round(self.sigx,2),np.round(self.sigy,2)}]...")
         with tqdm(total=100, bar_format='{l_bar}{bar}| [{elapsed}] {postfix}') as pbar:
             for j in range(0, self.N):
                 n, m = NollToQuantum(j)
@@ -282,6 +282,7 @@ class ZernikeFit:
     def optimize_ZT(self, init_ztparams, minimize_method='Nelder-Mead', xtol=1e-8, maxiter=100):
         """Optimize Zernike fit by minimizing chi-squared."""
         self.init_ztparams = init_ztparams
+        print("Is this a HPC machine? If so, good choice :). If not run this script with 'skip_minimize' set to True.\n")
         self.pbar = tqdm(desc="Optimizing", unit="iter", dynamic_ncols=True)
         self.ztopt = minimize(self.zt_chisq, self.init_ztparams,
                               callback=self.callback,
@@ -293,8 +294,11 @@ class ZernikeFit:
 
     def NO_optimize_ZT(self, init_ztparams,fac):
         """Estimate ZT scaling parameter skipping optimization."""
+        print("Skipping scaling parameter optimization.....\n")
+        print("Good choice if you are running in a laptop :) \n")
         self.init_ztparams = [init_ztparams[0] / fac, init_ztparams[1] / fac]
         self.zt_chisq(self.init_ztparams)
+        print("No optimization done for scaling parameter... and the ZT model is constructed using Gaussian sigma!!\n")
         return self.init_ztparams[0], self.init_ztparams[1], self.coef, np.abs(self.Expected)
 
     def plot_results_cart(self, data, model, freq, N, x, y, plot_format, plot_directory):
@@ -327,7 +331,7 @@ class ZernikeFit:
 
         plt.tight_layout()
         plotname = f"BeamFitResults_{freq}MHz with N={N}{plot_format}"
-        print("Making the plot.....")
+        print("Making the plot.....\n")
         plt.savefig(os.path.join(ROOT_DIR, plot_directory, plotname), bbox_inches='tight', dpi=300)
         plt.clf()
         plt.close('all')
@@ -363,7 +367,7 @@ class ZernikeFit:
         plt.tight_layout()
         
         plotname = f"BeamFitResults_{freq}MHz with N={N}{plot_format}"
-        print("Making the plot.....")
+        print("Making the plot.....\n")
         plt.savefig(os.path.join(ROOT_DIR, plot_directory, plotname), bbox_inches='tight', dpi=300)
         plt.clf()
         plt.close('all')
@@ -386,7 +390,7 @@ class GenBeam:
             self.n = df['n'].values
             self.m = df['m'].values
         else:
-            raise ValueError("Unsupported file format. Please use .csv files for Coefficients.")
+            raise ValueError("Unsupported file format. Please use .csv files for Coefficients.\n")
         
         
         return None; 
