@@ -24,8 +24,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 [![arXiv](https://img.shields.io/badge/arXiv-2101.00001-b31b1b.svg)](https://arxiv.org/abs/2412.09527)
 
-If applicable, link to your relevant arXiv paper here.
-
+Part of this tool was used in the research article. 
 ---
 
 ## Contact
