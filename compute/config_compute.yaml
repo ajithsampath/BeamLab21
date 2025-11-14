@@ -14,7 +14,7 @@
   dtype: float32    # numpy data type for array, use float128 if supported
 
   # Gaussian model parameters
-  gen_gaussian_model: False  # whether to use a Gaussian model for the beam instead of Zernike polynomials
+  gen_gaussian_model: True  # whether to use a Gaussian model for the beam instead of Zernike polynomials
   gaussian_lamdabyD_coef: 1.03         # Coefficient for lambda/D to set the FWHM of the Gaussian beam
   gaussian_amp: 1.0          # Amplitude of the Gaussian beam
   gaussian_offset_x: 0.0   # x offset of the Gaussian beam
@@ -28,7 +28,7 @@
   gaussian_noise_random_seed: 42   # random seed for noise generation
 
   #Zernike model parameters
-  gen_zernike_model: True  # whether to use Zernike polynomials for the beam
+  gen_zernike_model: False  # whether to use Zernike polynomials for the beam
   coef_dir: "outputs"
   scaleparam_dir: "outputs"
   coef_file: "reduced_coef.csv" # input file with Zernike coefficients (in Noll notation). A sample file is provided.

@@ -44,8 +44,7 @@
   output_filename: "testbeam"  # output file name
   output_format: ".npz"      # output file format, options are "hdf5" or "npy"
 
-  # Reduce coeff by ranking
+  # Reduce coeff by ranking/removing non-contributing modes
   reduce_coef: True
   in_coef_dir: "outputs"
   in_coef_filename: "Coef_full.csv"
-  percentage_energy: 100
