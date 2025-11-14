@@ -69,7 +69,7 @@ def load_beam(datafile,error_type='uniform',normalize_data=True):
 
         x = np.load(datafile)['x']
         y = np.load(datafile)['y']
-        freq_arr = np.load(datafile)['freq']
+        freq_arr = (np.load(datafile)['freq'])*1e3
         nchan = freq_arr.shape[0]
         if np.load(datafile).keys().__contains__('error'):
             error = np.load(datafile)['error']
@@ -294,7 +294,7 @@ class ZernikeFit:
 
     def NO_optimize_ZT(self, init_ztparams,fac):
         """Estimate ZT scaling parameter skipping optimization."""
-        print("Skipping scaling parameter optimization.....\n")
+        print("Skipping scaling parameter optimization for Zernike basis.....\n")
         print("Good choice if you are running in a laptop :) \n")
         self.init_ztparams = [init_ztparams[0] / fac, init_ztparams[1] / fac]
         self.zt_chisq(self.init_ztparams)

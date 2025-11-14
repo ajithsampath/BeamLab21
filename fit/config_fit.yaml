@@ -4,12 +4,12 @@
 
   # Telescope parameters
   Telescope_name: "Hirax"  # "Hirax" is the only supported option currently. This sets the aperture diameter and frequency range.
-  frequency: 400  # frequency channel to fit in MHz
+  frequency: 420  # frequency channel to fit in MHz
   aperture_diameter: 6.0   # aperture diameter in meters, default for Hirax is 6m
 
   # Data parameters
   data_dir: "data"
-  datafile: "samplecube.npz"  # path to the input data file (FITS, HDF5, NPY, NPZ, or TXT format)
+  datafile: "samplecube_cart.npz"  # path to the input data file (FITS, HDF5, NPY, NPZ, or TXT format)
   normalize_data: True     # whether to normalize the data before fitting
   coord_type: 'auto'        # type of coordinate system the data is in. Options are "cartesian", "polar" or "auto"8
   
