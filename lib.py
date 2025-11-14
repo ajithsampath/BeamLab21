@@ -406,15 +406,19 @@ class GenZTBeam:
         thetam = np.arctan2(ym,xm)
 
         self.Basis = np.zeros((len(self.coef),len(rm.flatten())),dtype=self.dtype)
-        
-        for id in range(self.coef.shape[0]):
-            n=self.n[id]
-            m=self.m[id]
-            Bes=(jn(n+1,rm))/rm
-            nc = np.abs((((2*n+1)*(2*n+3)*(2*n+5))/(-1)**n))**0.5
-            print(nc)
-            temp=np.real((nc*(np.exp(1j*m*thetam))/((1j**m)*2*np.pi) *(-1)**((n-m)/2) *Bes))
-            self.Basis[id]=temp.flatten()
+        print(f"Constructing the basis set for the given coefficients and scale parameters...")
+        with tqdm(total=100, bar_format='{l_bar}{bar}| [{elapsed}] {postfix}') as pbar:
+            for id in range(self.coef.shape[0]):
+                n=self.n[id]
+                m=self.m[id]
+                Bes=(jn(n+1,rm))/rm
+                nc = np.abs((((2*n+1)*(2*n+3)*(2*n+5))/(-1)**n))**0.5
+                #print(nc)
+                temp=np.real((nc*(np.exp(1j*m*thetam))/((1j**m)*2*np.pi) *(-1)**((n-m)/2) *Bes))
+                self.Basis[id]=temp.flatten()
+                pbar.update(100 / self.coef.shape[0])
+                pct = round(pbar.n, 1)
+                pbar.set_postfix_str(f'{pct}%')
         return self.Basis;
 
 

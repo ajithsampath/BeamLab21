@@ -21,7 +21,7 @@
   gverbose: True           # whether to print detailed logs during Gaussian fitting
 
   zernike_error_type: "proportional"       # type of error to use in Zernike fitting, options are "uniform", "proportional", or "custom"
-  N: 20                    # number of Zernike polynomials to fit, default is 15
+  N: 1500                    # number of Zernike polynomials to fit, default is 15
   skip_minimise: True
   fac: 2.5              #factor to change Gaussian sigma to ZT scaling parameter
   ztminimize_method: "Nelder-Mead"  # minimization method, options are "L-BFGS-B", "Nelder-Mead", "Powell", etc.
@@ -48,4 +48,4 @@
   reduce_coef: True
   in_coef_dir: "outputs"
   in_coef_filename: "Coef_full.csv"
-  percentage_energy: 99
+  percentage_energy: 100

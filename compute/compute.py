@@ -53,7 +53,6 @@ elif config['gen_zernike_model']:
     sigx,sigy = ztsp_df['sigx'].to_numpy(),ztsp_df['sigy'].to_numpy()
     ztgen.load_coef(coeffile)
     ztgen.basisfunc(sigx,sigy)
-    ztmodel = ztgen.Basis.T @ ztgen.coef
-    print(ztmodel)
-    plt.imshow(ztmodel.reshape(256,256))
-    plt.savefig("testgauss.png")     
+    ztmodel = np.dot(ztgen.Basis.T, ztgen.coef)
+    plt.imshow(np.log10(ztmodel.reshape(256,256)))
+    plt.savefig("testzt.png")     
