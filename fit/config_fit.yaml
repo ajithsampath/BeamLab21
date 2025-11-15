@@ -48,3 +48,4 @@
   reduce_coef: True
   in_coef_dir: "outputs"
   in_coef_filename: "Coef_full.csv"
+  percentage_energy: 99.99

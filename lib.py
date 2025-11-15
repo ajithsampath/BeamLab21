@@ -253,6 +253,7 @@ class ZernikeFit:
                     temp = np.real(
                         (nc * (np.exp(1j * m * thetam)) / ((1j ** m) * 2 * np.pi) * (-1) ** ((n - m) // 2) * Bes)
                     )
+                    temp = temp/np.max(temp)
                     self.Basis[count] = temp.flatten()
                     count += 1
                 pbar.update(100 / self.N)
@@ -415,6 +416,7 @@ class GenZTBeam:
                 nc = np.abs((((2*n+1)*(2*n+3)*(2*n+5))/(-1)**n))**0.5
                 #print(nc)
                 temp=np.real((nc*(np.exp(1j*m*thetam))/((1j**m)*2*np.pi) *(-1)**((n-m)/2) *Bes))
+                temp=temp/np.max(temp)
                 self.Basis[id]=temp.flatten()
                 pbar.update(100 / self.coef.shape[0])
                 pct = round(pbar.n, 1)

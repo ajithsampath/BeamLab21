@@ -38,12 +38,12 @@ sorted_indices = np.argsort(np.abs(coefs))[::-1]
 
 # Calculate cumulative contribution ratio 
 sorted_coefs = coefs[sorted_indices]
-cumulative_contrib = np.cumsum(np.abs(sorted_coefs)) / np.sum(np.abs(sorted_coefs))
+cumulative_contrib = np.cumsum(np.abs(sorted_coefs)**2) / np.sum(np.abs(sorted_coefs)**2)
 
 # Find how many coefficients to keep for 100% contribution / removing non-contributing coefs
-num_coefs = np.searchsorted(cumulative_contrib, 100) + 1
+num_coefs = np.searchsorted(cumulative_contrib, config['percentage_energy']/100) + 1
 
-print(f"Coefficients are reordered and reduced to most dominant modes with {config['percentage_energy']}% contribution..! ")
+#print(f"Coefficients are reordered and reduced to most dominant modes with {config['percentage_energy']}% contribution..! ")
 
 # Select indices of top coefficients
 selected_indices = sorted_indices[:num_coefs]
