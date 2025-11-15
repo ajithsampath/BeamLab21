@@ -54,7 +54,9 @@ def reorder_coef(coef):
         coef=np.insert(coef,g,0.0)
     return coef;
 
-
+def compute_impacts(coeffs, X):
+    impacts = np.linalg.norm(X * coeffs[:, None], axis=1)
+    return impacts
 
 def load_beam(datafile,error_type='uniform',normalize_data=True):
     if datafile.endswith('.fits'):
@@ -253,7 +255,7 @@ class ZernikeFit:
                     temp = np.real(
                         (nc * (np.exp(1j * m * thetam)) / ((1j ** m) * 2 * np.pi) * (-1) ** ((n - m) // 2) * Bes)
                     )
-                    temp = temp/np.max(temp)
+                    #temp = temp/np.max(temp)
                     self.Basis[count] = temp.flatten()
                     count += 1
                 pbar.update(100 / self.N)
@@ -374,6 +376,46 @@ class ZernikeFit:
         plt.close('all')
 
 
+    def process_and_reduce_coefficients(self, output_dir, coef_name, reduce=False, percentage_energy=100.0):
+        coef_reordered = reorder_coef(self.coef)
+
+        j = np.arange(len(coef_reordered))
+        vectorized_NollToQuantum = np.vectorize(NollToQuantum)
+
+        #generate quantum indices
+        n_val,m_val = vectorized_NollToQuantum(j)
+
+        coef_jnm = np.column_stack((j, n_val, m_val, coef_reordered))
+
+        if reduce:
+            impacts = np.linalg.norm(self.Basis * coef_reordered[:, None], axis=1)
+            sorted_idx = np.argsort(impacts)[::-1]
+            sorted_impacts = impacts[sorted_idx]
+            cumulative = np.cumsum(sorted_impacts) / np.sum(sorted_impacts)
+            target_fraction = percentage_energy / 100.0
+            num_keep = np.searchsorted(cumulative, target_fraction) + 1
+            keep_idx = sorted_idx[:num_keep]
+
+            coef_jnm = coef_jnm[keep_idx]
+            keep_mask = np.zeros(len(coef_reordered), dtype=bool)
+            keep_mask[keep_idx] = True
+            # Save reduced coefficients CSV
+            reduced_path = os.path.join(ROOT_DIR, output_dir, 'coef_reduced.csv')
+            os.makedirs(os.path.dirname(reduced_path), exist_ok=True)
+            df_reduced = pd.DataFrame(coef_jnm, columns=['j', 'n', 'm', 'coef'])
+            df_reduced.to_csv(reduced_path, index=False)
+
+        else:
+            # Save full coefficients CSV
+            full_path = os.path.join(ROOT_DIR, output_dir, coef_name)
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            df = pd.DataFrame({"coef_full": self.coef})
+            df.to_csv(full_path, index=False)
+            keep_mask = np.ones(len(coef_reordered), dtype=bool)
+
+        return None
+
+
 #Generative Beam class
 
 class GenZTBeam:
@@ -395,7 +437,6 @@ class GenZTBeam:
         else:
             raise ValueError("Unsupported file format. Please use .csv files for Coefficients.\n")
         
-        
         return None; 
         
     def basisfunc(self,sigx,sigy):
@@ -416,14 +457,9 @@ class GenZTBeam:
                 nc = np.abs((((2*n+1)*(2*n+3)*(2*n+5))/(-1)**n))**0.5
                 #print(nc)
                 temp=np.real((nc*(np.exp(1j*m*thetam))/((1j**m)*2*np.pi) *(-1)**((n-m)/2) *Bes))
-                temp=temp/np.max(temp)
+                #temp=temp/np.max(temp)
                 self.Basis[id]=temp.flatten()
                 pbar.update(100 / self.coef.shape[0])
                 pct = round(pbar.n, 1)
                 pbar.set_postfix_str(f'{pct}%')
         return self.Basis;
-
-
-
-
-

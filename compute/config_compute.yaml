@@ -30,10 +30,12 @@
   #Zernike model parameters
   gen_zernike_model: True  # whether to use Zernike polynomials for the beam
   coef_dir: "outputs"
+  coef_file: "coefficients.csv" # input file with Zernike coefficients (in Noll notation). A sample file is provided.
+  
   scaleparam_dir: "outputs"
-  coef_file: "reduced_coef.csv" # input file with Zernike coefficients (in Noll notation). A sample file is provided.
   scaleparam_file: "scaleparameters.csv"
-  zernike_normalization: True  # normalization for Zernike coefficients, options are True or False
+
+  #Adding noise
   zernike_noise: 0.0  # noise level to add to Zernike model
   zernike_noise_type: "normal" # type of noise to add, options are "normal" or "uniform"
   zernike_random_seed: 42  # random seed for noise generation 

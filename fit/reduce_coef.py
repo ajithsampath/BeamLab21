@@ -33,27 +33,30 @@ df_coef = pd.DataFrame(coef_jnm, columns=['j','n','m','coef'])
 
 coefs = df_coef.iloc[:, 3].values
 
-# Sort indices by absolute value of coefficient, in descending order
-sorted_indices = np.argsort(np.abs(coefs))[::-1]
+# --- Compute impact for each coefficient ---
+# impact_i = || c_i * X[:, i] ||  (true contribution to model)
+impacts = np.linalg.norm(coefs * X, axis=0)
 
-# Calculate cumulative contribution ratio 
-sorted_coefs = coefs[sorted_indices]
-cumulative_contrib = np.cumsum(np.abs(sorted_coefs)**2) / np.sum(np.abs(sorted_coefs)**2)
+# --- Sort coefficients by impact (descending) ---
+sorted_indices = np.argsort(impacts)[::-1]
+sorted_impacts = impacts[sorted_indices]
 
-# Find how many coefficients to keep for 100% contribution / removing non-contributing coefs
+# --- Cumulative impact contribution (0 to 1) ---
+cumulative_contrib = np.cumsum(sorted_impacts) / np.sum(sorted_impacts)
+
+# --- Choose number of coefficients needed for desired % impact ---
 num_coefs = np.searchsorted(cumulative_contrib, config['percentage_energy']/100) + 1
 
-#print(f"Coefficients are reordered and reduced to most dominant modes with {config['percentage_energy']}% contribution..! ")
-
-# Select indices of top coefficients
+# --- Select the top-impact coefficients ---
 selected_indices = sorted_indices[:num_coefs]
 
-# Select corresponding rows from original dataframe, preserving all columns
-selected_df = df_coef.iloc[selected_indices]
-selected_df = selected_df.sort_index()
+# --- Pull corresponding rows from original dataframe ---
+selected_df = df_coef.iloc[selected_indices].sort_index()
 
-out_coef_name = os.path.join(ROOT_DIR,config['out_coef_dir'],'reduced_coef.csv')
+# --- Save reduced coefficient file ---
+out_coef_name = os.path.join(ROOT_DIR, config['out_coef_dir'], 'reduced_coef.csv')
 selected_df.to_csv(out_coef_name, index=False)
+
 
 print("New coefficient file with Noll, Quantum indices and reduced Coefficients is written!")
 print(f"Check the file at {out_coef_name}")

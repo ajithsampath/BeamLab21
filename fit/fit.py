@@ -27,10 +27,13 @@ init_gparams = np.array(config['init_gparams'])  # Initial guess for Gaussian si
 
 save_outputs = config['save_outputs']
 output_dir = config['output_dir']
-output_name = config['output_filename']+config['output_format']
+output_name = config['output_name']+config['output_format']
 
-save_coef = config["save_coef"]
-coef_filename = config["out_coef_filename"]
+save_params = config['save_params']
+out_coef_dir = config['out_coef_dir']
+out_coef_name = config["out_coef_name"]
+out_sp_dir = config['out_sp_dir']
+out_sp_name = config["out_sp_name"]
 
 print("Fitting data from file:", datafile)
 print("Telescope:", telescope_name)
@@ -38,12 +41,15 @@ print("Frequency channel (MHz):", config['frequency'])
 
 #Initialize GaussianFit class
 gfit = GaussianFit(datafile,freq,error_type=config['gaussian_error_type'],normalize_data=config['normalize_data'],coord_type=config['coord_type'])
+
 print("Data loaded. Shape of observed data:", gfit.data.shape)
 print("Fitting a 2D Gaussian to calculate beam width...\n")
+
 #Optimize Gaussian fit
 print("Starting Gaussian fit optimization...\n")
 
 x,y,xo,yo,freq_arr,freq,sigx_gopt,sigy_gopt,gExpected,data,_= gfit.optimize_Gauss(init_gparams,minimize_method = config['gminimize_method'],xtol=config['gtol'],verbose=config['gverbose'])
+
 print("Gaussian fit completed. Optimized sigx:", sigx_gopt, "sigy:", sigy_gopt)
 
 #Generate Zernike basis
@@ -63,17 +69,28 @@ else:
     print("Zernike fit completed. Fit parameters:", coef)
 
 
-#Save fit parameters to csv file
-if save_coef:
-    cf = pd.DataFrame({"coef_full": coef})
-    coef_filename = os.path.join(ROOT_DIR,output_dir,coef_filename)
-    cf.to_csv(coef_filename, index=False)
-    print(f"Coefficients are saved in {coef_filename}!\n")
+if save_params:
+    #Reduce coefficients to some percentage contribution energy - to compress them.
+    coef_reordered = reorder_coef(coef)
+
+    j = np.arange(len(coef_reordered))
+    vectorized_NollToQuantum = np.vectorize(NollToQuantum)
+
+    #generate quantum indices
+    n_val,m_val = vectorized_NollToQuantum(j)
+    coef_jnm = np.column_stack((j, n_val, m_val, coef_reordered))
+    coef_jnm =  coef_jnm[coef_jnm[:, 3] != 0.0]
+    coef_path = os.path.join(ROOT_DIR, out_coef_dir, out_coef_name)
+    df_coef = pd.DataFrame(coef_jnm, columns=['j', 'n', 'm', 'coef'])
+    df_coef.to_csv(coef_path, index=False)
+
     df = pd.DataFrame({"freq(MHz)": [freq], "sigx": [sigx], "sigy": [sigy]})
     os.path.join(ROOT_DIR,output_dir)
-    sp_filename = os.path.join(ROOT_DIR,output_dir,"scaleparameters.csv")
-    df.to_csv(sp_filename, index=False)
-    print(f"Scaling parameters are saved in {sp_filename}!\n")
+    sp_name = os.path.join(ROOT_DIR,out_sp_dir,out_sp_name)
+    df.to_csv(sp_name, index=False)
+    print(f"Scaling parameters are saved in {sp_name}!\n")
+
+
 #Plot results
 if plot_results:
     ztfit.plot_results_cart(gfit.data,model_beam,freq,config['N'],x,y,plot_format,plot_directory) 
@@ -81,6 +98,8 @@ if plot_results:
 else:
     print("The results are not plotted and hence not saved..!!!\n")
 
+
+#Save model into a .npz file
 if save_outputs:
     np.savez(os.path.join(ROOT_DIR,output_dir,output_name),x=x,y=y,xo=xo,yo=yo,model=model_beam)
 else:

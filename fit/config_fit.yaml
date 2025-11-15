@@ -21,7 +21,7 @@
   gverbose: True           # whether to print detailed logs during Gaussian fitting
 
   zernike_error_type: "proportional"       # type of error to use in Zernike fitting, options are "uniform", "proportional", or "custom"
-  N: 1500                    # number of Zernike polynomials to fit, default is 15
+  N: 1500                   # number of Zernike polynomials to fit, default is 15
   skip_minimise: True
   fac: 2.5              #factor to change Gaussian sigma to ZT scaling parameter
   ztminimize_method: "Nelder-Mead"  # minimization method, options are "L-BFGS-B", "Nelder-Mead", "Powell", etc.
@@ -34,18 +34,15 @@
   plot_format: ".png"      # format for saving plots, options are "png", "pdf", etc.
   plot_directory: "outputs" # directory to save plots
 
-  #save full coefficients
-  save_coef: True
-  out_coef_dir: "outputs"
-  out_coef_filename: "Coef_full.csv"
   # Output parameters
   save_outputs: True        # whether to save the fitting results to a file
   output_dir : "outputs"
-  output_filename: "testbeam"  # output file name
+  output_name: "testbeam"  # output file name
   output_format: ".npz"      # output file format, options are "hdf5" or "npy"
 
-  # Reduce coeff by ranking/removing non-contributing modes
-  reduce_coef: True
-  in_coef_dir: "outputs"
-  in_coef_filename: "Coef_full.csv"
-  percentage_energy: 99.99
+  #save coefficients and scale parameters
+  save_params: True
+  out_coef_dir: "outputs"
+  out_coef_name: "coefficients.csv"
+  out_sp_dir: "outputs"
+  out_sp_name: "scaleparameters.csv"
