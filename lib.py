@@ -28,7 +28,19 @@ def NollToQuantum(j):
 def QuantumToNoll(n,m):
     j=int((n*(n+2)+m)/2)
     return j;
-    
+
+
+def find_min_full_N_for_Nprime(Nprime, NollToQuantum):
+    count = 0
+    j = 0
+    while True:
+        n, m = NollToQuantum(j)
+        if n >= 0 and n >= abs(m) and (n - abs(m)) % 2 == 0 and m >= 0:
+            count += 1
+            if count == Nprime:
+                return j + 1  # +1 because j is 0-based index
+        j += 1
+
 def twoD_Gaussian(x,y,params):
     amp,sigx,sigy,xo, yo, tilt = params
     xo = float(xo)
@@ -213,6 +225,7 @@ class ZernikeFit:
         self.freq = freq
         self.data = data
         self.N = N
+        self.N_full = find_min_full_N_for_Nprime(self.N,NollToQuantum)
 
         if normalize_data:
             self.data = self.data / np.max(self.data)
@@ -243,11 +256,11 @@ class ZernikeFit:
             thetam = self.theta
             rm[rm == 0] = 1e-10
 
-        self.Basis = np.zeros((int(self.N), int(len(rm.flatten()))), dtype="float32")
+        self.Basis = np.zeros((int(self.N_full), int(len(rm.flatten()))), dtype="float32")
         count = 0
         print(f"Constructing the full basis set for the given N={self.N} and scaling parameters = [{np.round(self.sigx,2),np.round(self.sigy,2)}]...")
         with tqdm(total=100, bar_format='{l_bar}{bar}| [{elapsed}] {postfix}') as pbar:
-            for j in range(0, self.N):
+            for j in range(0, self.N_full):
                 n, m = NollToQuantum(j)
                 if n >= 0 and n >= abs(m) and (n - abs(m)) % 2 == 0 and m >= 0:
                     Bes = (jn(n + 1, rm)) / rm
@@ -255,10 +268,9 @@ class ZernikeFit:
                     temp = np.real(
                         (nc * (np.exp(1j * m * thetam)) / ((1j ** m) * 2 * np.pi) * (-1) ** ((n - m) // 2) * Bes)
                     )
-                    #temp = temp/np.max(temp)
                     self.Basis[count] = temp.flatten()
                     count += 1
-                pbar.update(100 / self.N)
+                pbar.update(100 / self.N_full)
                 pct = round(pbar.n, 1)
                 pbar.set_postfix_str(f'{pct}%')
 
