@@ -1,0 +1,44 @@
+#Python project .gitignore
+
+# Ignore some big data files
+*.h5
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# VS Code settings
+.vscode/
+
+# Python virtual environments
+venv/
+env/
+.venv/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# Build / distribution folders
+build/
+dist/
+*.egg-info/
+
+# OS-specific files
+*.DS_Store
+*Thumbs.db
+
+# Ignore Jupyter notebook checkpoints
+*.ipynb_checkpoints/
+
+# Ignore secrets / config files
+*.env
+
+# Ignore tests folder
+tests/
+
