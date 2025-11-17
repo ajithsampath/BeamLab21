@@ -5,7 +5,7 @@
 #Returns fit parameters (gaussian parameters or Zernike Coefficients) and model beam.
 
 from src.lib import *
-from src import ROOT_DIR
+from src.beamlab21 import ROOT_DIR
 
 #read config_fit.yaml file
 yamlpath = os.path.join(ROOT_DIR, 'fit', 'config_fit.yaml')
