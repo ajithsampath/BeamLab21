@@ -4,7 +4,7 @@
 #Fit gaussian/Zernikes to EMsims or Drone data 
 #Returns fit parameters (gaussian parameters or Zernike Coefficients) and model beam.
 
-from src.lib import *
+from src.beamlab21.lib import *
 from src.beamlab21 import ROOT_DIR
 
 #read config_fit.yaml file
