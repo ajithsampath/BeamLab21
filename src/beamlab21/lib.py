@@ -20,7 +20,7 @@ from tqdm import tqdm
 import sys
 
 def get_project_root():
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 def load_config(path):
     if not os.path.isfile(path):
@@ -124,7 +124,7 @@ class GaussianFit:
         """
         self.freq = freq
         self.x, self.y, self.freq_arr, self.nchan, self.error, self.data_cube = \
-            load_beam(datafile, error_type, normalize_data)
+            load_beam(datafile)
         # Auto-detect coordinate system if requested
         if coord_type == 'auto':
             # Heuristic: if range of x ~ [0, 2π] and min(y) >= 0 => polar (r, θ)
