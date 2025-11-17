@@ -1,7 +1,6 @@
 #Python project .gitignore
 
 # Ignore some big data files
-*.npz
 *.h5
 
 # Byte-compiled / optimized / DLL files
