@@ -22,11 +22,9 @@ def run(config_path):
 
     init_gparams = np.array(config['init_gparams'])  # Initial guess for Gaussian sigmas in arcminutes
 
-    goutput_dir = os.path.join(project_root,config['goutput_dir'])
-    goutput_name = config['goutput_name']
+    
 
-    zoutput_dir = config['zoutput_dir']
-    zoutput_name = config['zoutput_name']+config['zoutput_format']
+    
 
     save_params = config['save_params']
     
@@ -54,6 +52,8 @@ def run(config_path):
 
     #Save Zernike Model into a .npz file
     if config['save_gaussian_model']:
+        goutput_dir = os.path.join(project_root,config['goutput_dir'])
+        goutput_name = config['goutput_name']
         np.savez(os.path.join(project_root,goutput_dir,goutput_name),x=x,y=y,xo=xo,yo=yo,model=gExpected)
     else:
         print("Fitted model is not saved! Set save_zernike_model parameters to True in the config_fit.yaml file :)\n")
@@ -116,6 +116,8 @@ def run(config_path):
 
     #Save Zernike Model into a .npz file
     if config['save_zernike_model']:
+        zoutput_dir = config['zoutput_dir']
+        zoutput_name = config['zoutput_name']+config['zoutput_format']
         np.savez(os.path.join(project_root,zoutput_dir,zoutput_name),x=x,y=y,xo=xo,yo=yo,model=model_beam)
     else:
         print("Fitted model is not saved! Set save_zernike_model parameters to True in the config_fit.yaml file :)\n")
