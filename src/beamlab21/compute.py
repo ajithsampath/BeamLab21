@@ -12,8 +12,6 @@ project_root = get_project_root()
 config_path = sys.argv[1] if len(sys.argv) > 1 else 'configs/config_compute.yaml'
 config = load_config(config_path)
 
-print("Loaded config:", config)
-
 freq = config['freq']
 c = 3e8
 wvl = c/(freq*1e6)
