@@ -5,9 +5,9 @@
 #Return HIRAX beam model
 
 from beamlab21.lib import *
-from beamlab21 import ROOT_DIR
 
 #read config_compute.yaml file
+project_root = get_project_root()
 
 config_path = sys.argv[1] if len(sys.argv) > 1 else 'configs/config_compute.yaml'
 config = load_config(config_path)
@@ -23,8 +23,8 @@ angextent = config['pixels']*config['angular_res']
 x = np.linspace(-angextent/2,angextent/2,config['pixels'])
 y = x
 dtype = config['dtype']
-scaleparamfile = os.path.join(ROOT_DIR,config['scaleparam_dir'],config['scaleparam_file']) 
-coeffile = os.path.join(ROOT_DIR,config['coef_dir'],config['coef_file']) 
+scaleparamfile = os.path.join(project_root,config['scaleparam_dir'],config['scaleparam_file']) 
+coeffile = os.path.join(project_root,config['coef_dir'],config['coef_file']) 
 
 
 if config['gen_gaussian_model'] and config['gen_zernike_model']:

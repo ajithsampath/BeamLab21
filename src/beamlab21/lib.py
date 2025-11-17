@@ -19,7 +19,8 @@ from astropy.io import fits
 from tqdm import tqdm
 import sys
 
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+def get_project_root():
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
 def load_config(path):
     if not os.path.isfile(path):
@@ -124,7 +125,6 @@ class GaussianFit:
         self.freq = freq
         self.x, self.y, self.freq_arr, self.nchan, self.error, self.data_cube = \
             load_beam(datafile, error_type, normalize_data)
-
         # Auto-detect coordinate system if requested
         if coord_type == 'auto':
             # Heuristic: if range of x ~ [0, 2π] and min(y) >= 0 => polar (r, θ)
@@ -207,6 +207,7 @@ class ZernikeFit:
         """
         self.pbar = None
         self.coord_type = coord_type
+        self.project_root=get_project_root()
 
         # Auto-detect coordinate system if needed
         if self.coord_type == 'auto':
@@ -354,7 +355,7 @@ class ZernikeFit:
         plt.tight_layout()
         plotname = f"BeamFitResults_{freq}MHz with N={N}{plot_format}"
         print("Making the plot.....\n")
-        plt.savefig(os.path.join(ROOT_DIR, plot_directory, plotname), bbox_inches='tight', dpi=300)
+        plt.savefig(os.path.join(self.project_root, plot_directory, plotname), bbox_inches='tight', dpi=300)
         plt.clf()
         plt.close('all')
 
@@ -390,7 +391,7 @@ class ZernikeFit:
         
         plotname = f"BeamFitResults_{freq}MHz with N={N}{plot_format}"
         print("Making the plot.....\n")
-        plt.savefig(os.path.join(ROOT_DIR, plot_directory, plotname), bbox_inches='tight', dpi=300)
+        plt.savefig(os.path.join(self.project_root, plot_directory, plotname), bbox_inches='tight', dpi=300)
         plt.clf()
         plt.close('all')
 
@@ -419,14 +420,14 @@ class ZernikeFit:
             keep_mask = np.zeros(len(coef_reordered), dtype=bool)
             keep_mask[keep_idx] = True
             # Save reduced coefficients CSV
-            reduced_path = os.path.join(ROOT_DIR, output_dir, 'coef_reduced.csv')
+            reduced_path = os.path.join(self.project_root, output_dir, 'coef_reduced.csv')
             os.makedirs(os.path.dirname(reduced_path), exist_ok=True)
             df_reduced = pd.DataFrame(coef_jnm, columns=['j', 'n', 'm', 'coef'])
             df_reduced.to_csv(reduced_path, index=False)
 
         else:
             # Save full coefficients CSV
-            full_path = os.path.join(ROOT_DIR, output_dir, coef_name)
+            full_path = os.path.join(self.project_root, output_dir, coef_name)
             os.makedirs(os.path.dirname(full_path), exist_ok=True)
             df = pd.DataFrame({"coef_full": self.coef})
             df.to_csv(full_path, index=False)

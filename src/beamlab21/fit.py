@@ -5,9 +5,9 @@
 #Returns fit parameters (gaussian parameters or Zernike Coefficients) and model beam.
 
 from beamlab21.lib import *
-from beamlab21 import ROOT_DIR
 
 #read config_fit.yaml file
+project_root = get_project_root()
 
 config_path = sys.argv[1] if len(sys.argv) > 1 else 'configs/config_fit.yaml'
 config = load_config(config_path)
@@ -17,13 +17,13 @@ print("Loaded config:", config)
 #read in necessary parameters    
 telescope_name = config['Telescope_name']
 
-datafile = os.path.join(ROOT_DIR,config["data_dir"],config['datafile'])
+datafile = os.path.join(project_root,config["data_dir"],config['datafile'])
 freq = config['frequency']
 fac = config['fac']
 
 plot_results = config['plot_results']
 plot_format = config['plot_format']
-plot_directory = os.path.join(ROOT_DIR,config['plot_directory'])
+plot_directory = os.path.join(project_root,config['plot_directory'])
 init_gparams = np.array(config['init_gparams'])  # Initial guess for Gaussian sigmas in arcminutes
 
 save_outputs = config['save_outputs']
@@ -81,13 +81,13 @@ if save_params:
     n_val,m_val = vectorized_NollToQuantum(j)
     coef_jnm = np.column_stack((j, n_val, m_val, coef_reordered))
     coef_jnm =  coef_jnm[coef_jnm[:, 3] != 0.0]
-    coef_path = os.path.join(ROOT_DIR, out_coef_dir, out_coef_name)
+    coef_path = os.path.join(project_root, out_coef_dir, out_coef_name)
     df_coef = pd.DataFrame(coef_jnm, columns=['j', 'n', 'm', 'coef'])
     df_coef.to_csv(coef_path, index=False)
 
     df = pd.DataFrame({"freq(MHz)": [freq], "sigx": [sigx], "sigy": [sigy]})
-    os.path.join(ROOT_DIR,output_dir)
-    sp_name = os.path.join(ROOT_DIR,out_sp_dir,out_sp_name)
+    os.path.join(project_root,output_dir)
+    sp_name = os.path.join(project_root,out_sp_dir,out_sp_name)
     df.to_csv(sp_name, index=False)
     print(f"Scaling parameters are saved in {sp_name}!\n")
 
@@ -102,7 +102,7 @@ else:
 
 #Save model into a .npz file
 if save_outputs:
-    np.savez(os.path.join(ROOT_DIR,output_dir,output_name),x=x,y=y,xo=xo,yo=yo,model=model_beam)
+    np.savez(os.path.join(project_root,output_dir,output_name),x=x,y=y,xo=xo,yo=yo,model=model_beam)
 else:
     print("Fitted model is not saved! Set save_outputs parameters to True in the config_fit.yaml file :)\n")
 
