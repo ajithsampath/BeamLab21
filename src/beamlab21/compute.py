@@ -45,12 +45,16 @@ def run(config_path):
             gnoise = np.random.normal(loc=config['gaussian_noise_mean'], scale=config['gaussian_noise_sigma'], size=gmodel.shape)
         else:
             gnoise = 0.0
+            print("No random noise added to the Gaussian Model...\n")
 
         gmodel = (gmodel + gnoise).reshape(config['pixels'],config['pixels'])
 
-        np.savez(f"GaussianMainLobeModel_{freq}MHz.npz",x=x,y=y,data=gmodel)
-        plt.imshow(gmodel)
-        plt.savefig("testgauss.png") 
+        if config['save_gaussian_model']:
+            goutput_dir = os.path.join(project_root,config['goutput_dir'])
+            goutput_name = config['goutput_name']
+            np.savez(os.path.join(project_root,goutput_dir,goutput_name),x=x,y=y,data=gmodel)
+        else:
+            print("Computed Gaussian model is not saved! Set save_gaussian_model parameters to True in the config_compute.yaml file :)\n")
 
     elif config['gen_zernike_model']:
         ztgen = GenZTBeam(freq,x,y,dtype)
@@ -59,9 +63,22 @@ def run(config_path):
         ztgen.load_coef(coeffile)
         ztgen.basisfunc(sigx,sigy)
         ztmodel = np.dot(ztgen.Basis.T, ztgen.coef)
-        plt.imshow(np.log10(ztmodel.reshape(256,256)))
-        plt.savefig("testzt.png")     
 
+        if config['add_noise2zernike']:
+            np.random.seed(config['zernike_noise_random_seed']) 
+            znoise = np.random.normal(loc=config['zernike_noise_mean'], scale=config['zernike_noise_sigma'], size=gmodel.shape)
+        else:
+            znoise = 0.0
+            print("No random noise added to the Gaussian Model...\n")
+
+        ztmodel = (ztmodel + znoise).reshape(config['pixels'],config['pixels'])
+        
+        if config['save_zernike_model']:        
+            zoutput_dir = config['zoutput_dir']
+            zoutput_name = config['zoutput_name']+config['zoutput_format']
+            np.savez(os.path.join(project_root,zoutput_dir,zoutput_name),x=x,y=y,data=ztmodel)
+        else:
+            print("Computed Zernike model is not saved! Set save_zernike_model parameters to True in the config_compute.yaml file :)\n")
 
     else: 
         print("Set one out of the two gen_gaussian_model and gen_zernike_model parameters to be true!\n")

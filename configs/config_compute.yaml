@@ -2,14 +2,14 @@
 
   # Telescope parameters
   Telescope_name: "Hirax"  # "Hirax" is the only supported option currently. This sets the aperture diameter and frequency range.
-  freq: 400  # frequency range in Hz
+  frequency: 400  # frequency range in Hz
 
   # Grid parameters
   pixels: 256       # number of pixels in x and y
   angular_res: 0.5858   # angular resolution in degrees. This sets the field of view (FOV = pixels * angular_res)
   
   # Output parameters
-  output_filename: "testmodel"  # output file name
+  output_filename: "ComputedModel__{{ frequency }}"  # output file name
   output_format: ".npz"      # output file format, options are "npz" or "npy"
   dtype: float32    # numpy data type for array, use float128 if supported
 
@@ -21,6 +21,11 @@
   gaussian_offset_y: 0.0   # y offset of the Gaussian beam
   gaussian_rotation: 0.0     # rotation angle of the Gaussian beam in degrees
 
+  save_gaussian_model: True
+  goutput_dir : "outputs"
+  goutput_name: "ComputedGaussianModel_{{ frequency }}"  # output file name
+  goutput_format: ".npz"      # output file format
+
   add_noise2gaussian: False
   gaussian_noise_type: "normal" # type of noise to add, options are "normal" or "uniform"
   gaussian_noise_mean: 0.0
@@ -30,12 +35,18 @@
   #Zernike model parameters
   gen_zernike_model: True  # whether to use Zernike polynomials for the beam
   coef_dir: "outputs"
-  coef_file: "coefficients.csv" # input file with Zernike coefficients (in Noll notation). A sample file is provided.
+  coef_file: "coefficients_{{ frequency }}.csv" # input file with Zernike coefficients (in Noll notation). A sample file is provided.
   
   scaleparam_dir: "outputs"
-  scaleparam_file: "scaleparameters.csv"
+  scaleparam_file: "scaleparameters_{{ frequency }}.csv"
 
   #Adding noise
-  zernike_noise: 0.0  # noise level to add to Zernike model
+  add_noise2zernike: True
+  zernike_noise_mean: 0.0  # noise level to add to Zernike model
+  zernike_noise_sigma: 0.0  # noise level to add to Zernike model
   zernike_noise_type: "normal" # type of noise to add, options are "normal" or "uniform"
-  zernike_random_seed: 42  # random seed for noise generation 
+  zernike_noise_random_seed: 42  # random seed for noise generation 
+
+  zoutput_dir : "outputs"
+  zoutput_name: "ZernikeModel_{{ frequency }}"  # output file name
+  zoutput_format: ".npz"      # output file format

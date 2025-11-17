@@ -56,7 +56,7 @@ def run(config_path):
         goutput_name = config['goutput_name']
         np.savez(os.path.join(project_root,goutput_dir,goutput_name),x=x,y=y,xo=xo,yo=yo,model=gExpected)
     else:
-        print("Fitted model is not saved! Set save_zernike_model parameters to True in the config_fit.yaml file :)\n")
+        print("Fitted main lobe model is not saved! Set save_gaussian_model parameters to True in the config_fit.yaml file :)\n")
 
     #Generate Zernike basis
     print("Generating Zernike basis...\n")
