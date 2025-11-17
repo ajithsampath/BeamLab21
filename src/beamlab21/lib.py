@@ -17,8 +17,8 @@ import h5py
 import pandas as pd
 from astropy.io import fits
 from tqdm import tqdm
-from BeamLab21 import ROOT_DIR
-
+import os
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 
 def NollToQuantum(j):
     n=int(np.ceil((-3+np.sqrt(9+(8*j)))/2))

@@ -4,11 +4,11 @@
 #Compute HIRAX beam from Zernike basis functions using coefficients from csv file or from Gaussian parameters in yaml file
 #Return HIRAX beam model
 
-from BeamLab21.lib import *
-from BeamLab21 import ROOT_DIR
+from beamlab21.lib import *
+from beamlab21 import ROOT_DIR
 
 #read config_compute.yaml file
-yamlpath = os.path.join(ROOT_DIR, 'compute', 'config_compute.yaml')
+yamlpath = os.path.join(ROOT_DIR, 'configs', 'config_compute.yaml')
 
 with open(yamlpath, 'r') as file:
     config = yaml.safe_load(file)
