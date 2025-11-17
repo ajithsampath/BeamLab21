@@ -9,9 +9,6 @@ from beamlab21 import ROOT_DIR
 
 #read config_fit.yaml file
 
-if len(sys.argv) < 2:
-    print("Usage: python -m beamlab21.fit <config_path>")
-    sys.exit(1)
 
 config_path = sys.argv[1] if len(sys.argv) > 1 else 'configs/config_fit.yaml'
 config = load_config(config_path)
