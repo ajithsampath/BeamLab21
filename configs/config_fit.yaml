@@ -9,7 +9,7 @@
 
   # Data parameters
   data_dir: "data"
-  datafile: "sample_cart_symm.npz"  # path to the input data file (FITS, HDF5, NPY, NPZ, or TXT format)
+  datafile: "Example_cube.npz"  # path to the input data file (FITS, HDF5, NPY, NPZ, or TXT format)
   normalize_data: True     # whether to normalize the data before fitting
   coord_type: 'auto'        # type of coordinate system the data is in. Options are "cartesian", "polar" or "auto"
   
@@ -19,9 +19,14 @@
   gminimize_method: "Nelder-Mead"  # minimization method for Gaussian fit, options are "L-BFGS-B", "Nelder-Mead", "Powell", etc.
   gtol: 1e-6               # tolerance for termination of the Gaussian minimization algorithm
   gverbose: True           # whether to print detailed logs during Gaussian fitting
+  
+  save_gaussian_model: True
+  goutput_dir : "outputs"
+  goutput_name: "GaussianModel_400"  # output file name
+  goutput_format: ".npz"      # output file format
 
   zernike_error_type: "proportional"       # type of error to use in Zernike fitting, options are "uniform", "proportional", or "custom"
-  N: 750                   # number of Zernike polynomials to fit, default is 15
+  N: 15                   # number of Zernike polynomials to fit, default is 15
   skip_minimise: True
   fac: 3             #factor to change Gaussian sigma to ZT scaling parameter
   ztminimize_method: "Nelder-Mead"  # minimization method, options are "L-BFGS-B", "Nelder-Mead", "Powell", etc.
@@ -29,17 +34,18 @@
   zttol: 1e-6               # tolerance for termination of the Zernike minimization algorithm
   zverbose: False           # whether to print detailed logs during fitting
 
+  # Output parameters
+  save_zernike_model: True        # whether to save the fitting results to a file
+  zoutput_dir : "outputs"
+  zoutput_name: "ZernikeModel_400"  # output file name
+  zoutput_format: ".npz"      # output file format
+
   #plotting paramters
   plot_results: True      # whether to plot the fitting results
-  plot_cmap: 'inferno'
+  plot_cmap: 'gist_ncar'
   plot_format: ".png"      # format for saving plots, options are "png", "pdf", etc.
   plot_directory: "outputs" # directory to save plots
 
-  # Output parameters
-  save_outputs: True        # whether to save the fitting results to a file
-  output_dir : "outputs"
-  output_name: "testbeam"  # output file name
-  output_format: ".npz"      # output file format, options are "hdf5" or "npy"
 
   #save coefficients and scale parameters
   save_params: True

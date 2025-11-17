@@ -324,7 +324,7 @@ class ZernikeFit:
         print("No optimization done for scaling parameter... and the ZT model is constructed using Gaussian sigma!!\n")
         return self.init_ztparams[0], self.init_ztparams[1], self.coef, np.abs(self.Expected)
 
-    def plot_results_cart(self, data, model, freq, N, x, y, plot_format, plot_directory):
+    def plot_results_cart(self, data, model, freq, N, x, y, plot_format, plot_directory,plot_cmap):
         ms = 1.5
         vmin = None
         vmax = None
@@ -335,12 +335,12 @@ class ZernikeFit:
         ax2 = plt.subplot(132)
         ax3 = plt.subplot(133)
 
-        z1_plot = ax1.imshow(np.log(data), cmap='inferno', vmin=vmin, vmax=vmax, extent=extent)
+        z1_plot = ax1.imshow(np.log(data), cmap=plot_cmap, vmin=vmin, vmax=vmax, extent=extent)
         ax1.grid(False)
         plt.colorbar(z1_plot, ax=ax1, fraction=0.047)
         ax1.set_title("Simulated CST beam")
 
-        z2_plot = ax2.imshow(np.log(model), cmap='inferno', vmin=vmin, vmax=vmax, extent=extent)
+        z2_plot = ax2.imshow(np.log(model), cmap=plot_cmap, vmin=vmin, vmax=vmax, extent=extent)
         ax2.grid(False)
         plt.colorbar(z2_plot, ax=ax2, fraction=0.047)
         ax2.set_title(f"Fit with {N} basis functions")
@@ -353,7 +353,7 @@ class ZernikeFit:
         ax3.get_yaxis().set_visible(False)
 
         plt.tight_layout()
-        plotname = f"BeamFitResults_{freq}MHz with N={N}{plot_format}"
+        plotname = f"ZernikeFitResults_{freq}MHz with N={N}{plot_format}"
         print("Making the plot.....\n")
         if not os.path.exists(os.path.join(self.project_root,plot_directory)):
             os.makedirs(os.path.join(self.project_root,plot_directory))
@@ -391,7 +391,7 @@ class ZernikeFit:
 
         plt.tight_layout()
         
-        plotname = f"BeamFitResults_{freq}MHz with N={N}{plot_format}"
+        plotname = f"ZernikeFitResults_{freq}MHz with N={N}{plot_format}"
         print("Making the plot.....\n")
         if not os.path.exists(os.path.join(self.project_root,plot_directory)):
             os.makedirs(os.path.join(self.project_root,plot_directory))

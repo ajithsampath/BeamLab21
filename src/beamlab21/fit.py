@@ -23,9 +23,11 @@ def run(config_path):
     plot_directory = os.path.join(project_root,config['plot_directory'])
     init_gparams = np.array(config['init_gparams'])  # Initial guess for Gaussian sigmas in arcminutes
 
-    save_outputs = config['save_outputs']
-    output_dir = config['output_dir']
-    output_name = config['output_name']+config['output_format']
+    goutput_dir = os.path.join(project_root,config['goutput_dir'])
+    goutput_name = config['goutput_name']
+
+    zoutput_dir = config['zoutput_dir']
+    zoutput_name = config['zoutput_name']+config['zoutput_format']
 
     save_params = config['save_params']
     out_coef_dir = config['out_coef_dir']
@@ -53,6 +55,12 @@ def run(config_path):
     x,y,xo,yo,freq_arr,freq,sigx_gopt,sigy_gopt,gExpected,data,_= gfit.optimize_Gauss(init_gparams,minimize_method = config['gminimize_method'],xtol=config['gtol'],verbose=config['gverbose'])
 
     print("Gaussian fit completed. Optimized sigx:", sigx_gopt, "sigy:", sigy_gopt)
+
+    #Save Zernike Model into a .npz file
+    if config['save_gaussian_model']:
+        np.savez(os.path.join(project_root,goutput_dir,goutput_name),x=x,y=y,xo=xo,yo=yo,model=gExpected)
+    else:
+        print("Fitted model is not saved! Set save_zernike_model parameters to True in the config_fit.yaml file :)\n")
 
     #Generate Zernike basis
     print("Generating Zernike basis...\n")
@@ -98,17 +106,17 @@ def run(config_path):
 
     #Plot results
     if plot_results:
-        ztfit.plot_results_cart(gfit.data,model_beam,freq,config['N'],x,y,plot_format,plot_directory) 
+        ztfit.plot_results_cart(gfit.data,model_beam,freq,config['N'],x,y,plot_format,plot_directory,config['plot_cmap']) 
         print("Plotted and saved...!!!\n")
     else:
         print("The results are not plotted and hence not saved..!!!\n")
 
 
-    #Save model into a .npz file
-    if save_outputs:
-        np.savez(os.path.join(project_root,output_dir,output_name),x=x,y=y,xo=xo,yo=yo,model=model_beam)
+    #Save Zernike Model into a .npz file
+    if config['save_zernike_model']:
+        np.savez(os.path.join(project_root,zoutput_dir,zoutput_name),x=x,y=y,xo=xo,yo=yo,model=model_beam)
     else:
-        print("Fitted model is not saved! Set save_outputs parameters to True in the config_fit.yaml file :)\n")
+        print("Fitted model is not saved! Set save_zernike_model parameters to True in the config_fit.yaml file :)\n")
 
 
     print("Decomposing/Fitting the beam for a single given frequency is done!!\n")
