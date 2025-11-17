@@ -19,8 +19,7 @@ def run(config_path):
     fac = config['fac']
 
     plot_results = config['plot_results']
-    plot_format = config['plot_format']
-    plot_directory = os.path.join(project_root,config['plot_directory'])
+
     init_gparams = np.array(config['init_gparams'])  # Initial guess for Gaussian sigmas in arcminutes
 
     goutput_dir = os.path.join(project_root,config['goutput_dir'])
@@ -30,10 +29,7 @@ def run(config_path):
     zoutput_name = config['zoutput_name']+config['zoutput_format']
 
     save_params = config['save_params']
-    out_coef_dir = config['out_coef_dir']
-    out_coef_name = config["out_coef_name"]
-    out_sp_dir = config['out_sp_dir']
-    out_sp_name = config["out_sp_name"]
+    
 
     print("Project root:", get_project_root())
     print("Config file path:", config_path)
@@ -80,6 +76,10 @@ def run(config_path):
 
 
     if save_params:
+        out_coef_dir = config['out_coef_dir']
+        out_coef_name = config["out_coef_name"]
+        out_sp_dir = config['out_sp_dir']
+        out_sp_name = config["out_sp_name"]
         #Reduce coefficients to some percentage contribution energy - to compress them.
         coef_reordered = reorder_coef(coef)
 
@@ -106,6 +106,8 @@ def run(config_path):
 
     #Plot results
     if plot_results:
+        plot_format = config['plot_format']
+        plot_directory = os.path.join(project_root,config['plot_directory'])
         ztfit.plot_results_cart(gfit.data,model_beam,freq,config['N'],x,y,plot_format,plot_directory,config['plot_cmap']) 
         print("Plotted and saved...!!!\n")
     else:

@@ -20,10 +20,10 @@
   gtol: 1e-6               # tolerance for termination of the Gaussian minimization algorithm
   gverbose: True           # whether to print detailed logs during Gaussian fitting
   
-  save_gaussian_model: True
-  goutput_dir : "outputs"
-  goutput_name: "GaussianModel_{{ frequency }}"  # output file name
-  goutput_format: ".npz"      # output file format
+  save_gaussian_model:
+    goutput_dir : "outputs"
+    goutput_name: "GaussianModel_{{ frequency }}"  # output file name
+    goutput_format: ".npz"      # output file format
 
   zernike_error_type: "proportional"       # type of error to use in Zernike fitting, options are "uniform", "proportional", or "custom"
   N: 15                   # number of Zernike polynomials to fit, default is 15
@@ -35,21 +35,21 @@
   zverbose: False           # whether to print detailed logs during fitting
 
   # Output parameters
-  save_zernike_model: True        # whether to save the fitting results to a file
-  zoutput_dir : "outputs"
-  zoutput_name: "ZernikeModel_{{ frequency }}"  # output file name
-  zoutput_format: ".npz"      # output file format
+  save_zernike_model:        # whether to save the fitting results to a file
+    zoutput_dir : "outputs"
+    zoutput_name: "ZernikeModel_{{ frequency }}"  # output file name
+    zoutput_format: ".npz"      # output file format
 
   #plotting paramters
-  plot_results: True      # whether to plot the fitting results
-  plot_cmap: 'gist_ncar'
-  plot_format: ".png"      # format for saving plots, options are "png", "pdf", etc.
-  plot_directory: "outputs" # directory to save plots
+  plot_results:      # whether to plot the fitting results
+    plot_cmap: "gist_ncar"
+    plot_format: ".png"      # format for saving plots, options are "png", "pdf", etc.
+    plot_directory: "outputs" # directory to save plots
 
 
   #save coefficients and scale parameters
-  save_params: True
-  out_coef_dir: "outputs"
-  out_coef_name: "coefficients_{{ frequency }}.csv"
-  out_sp_dir: "outputs"
-  out_sp_name: "scaleparameters_{{ frequency }}.csv"
+  save_params:
+    out_coef_dir: "outputs"
+    out_coef_name: "coefficients_{{ frequency }}.csv"
+    out_sp_dir: "outputs"
+    out_sp_name: "scaleparameters_{{ frequency }}.csv"
