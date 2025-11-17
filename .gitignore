@@ -39,3 +39,7 @@ dist/
 
 # Ignore secrets / config files
 *.env
+
+# Ignore tests folder
+tests/
+

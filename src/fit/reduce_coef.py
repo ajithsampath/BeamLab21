@@ -1,8 +1,8 @@
 #Author: Ajith Sampath
 #Affiliation: University of Geneva
 
-from BeamLab21.lib import *
-from BeamLab21 import ROOT_DIR
+from beamlab21.lib import *
+from beamlab21 import ROOT_DIR
 
 #read config_fit.yaml file
 yamlpath = os.path.join(ROOT_DIR, 'fit', 'config_fit.yaml')
