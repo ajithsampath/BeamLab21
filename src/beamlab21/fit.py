@@ -9,7 +9,7 @@ from beamlab21.lib import *
 
 def run(config_path):
     project_root = get_project_root()
-    config = load_config(config_path)
+    config = load_config(config_path, context={"frequency": 400})
 
     #read in necessary parameters    
     telescope_name = config['Telescope_name']

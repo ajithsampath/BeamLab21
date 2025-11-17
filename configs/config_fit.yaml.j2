@@ -22,7 +22,7 @@
   
   save_gaussian_model: True
   goutput_dir : "outputs"
-  goutput_name: "GaussianModel_400"  # output file name
+  goutput_name: "GaussianModel_{{ frequency }}"  # output file name
   goutput_format: ".npz"      # output file format
 
   zernike_error_type: "proportional"       # type of error to use in Zernike fitting, options are "uniform", "proportional", or "custom"
@@ -37,7 +37,7 @@
   # Output parameters
   save_zernike_model: True        # whether to save the fitting results to a file
   zoutput_dir : "outputs"
-  zoutput_name: "ZernikeModel_400"  # output file name
+  zoutput_name: "ZernikeModel_{{ frequency }}"  # output file name
   zoutput_format: ".npz"      # output file format
 
   #plotting paramters
@@ -50,6 +50,6 @@
   #save coefficients and scale parameters
   save_params: True
   out_coef_dir: "outputs"
-  out_coef_name: "coefficients.csv"
+  out_coef_name: "coefficients_{{ frequency }}.csv"
   out_sp_dir: "outputs"
-  out_sp_name: "scaleparameters.csv"
+  out_sp_name: "scaleparameters_{{ frequency }}.csv"

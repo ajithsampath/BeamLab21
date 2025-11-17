@@ -18,15 +18,24 @@ import pandas as pd
 from astropy.io import fits
 from tqdm import tqdm
 import sys
+from jinja2 import Template
+
 
 def get_project_root():
     return os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
-def load_config(path):
+def load_config(path, context=None):
     if not os.path.isfile(path):
         raise FileNotFoundError(f"Config file not found at {path}")
+    
+    context = context or {}
     with open(path, 'r') as f:
-        return yaml.safe_load(f)
+        template_str = f.read()
+    
+    template = Template(template_str)
+    rendered_yaml = template.render(context)
+    
+    return yaml.safe_load(rendered_yaml)
 
 def NollToQuantum(j):
     n=int(np.ceil((-3+np.sqrt(9+(8*j)))/2))
