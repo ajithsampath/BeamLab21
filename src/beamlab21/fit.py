@@ -8,10 +8,15 @@ from beamlab21.lib import *
 from beamlab21 import ROOT_DIR
 
 #read config_fit.yaml file
-yamlpath = os.path.join(ROOT_DIR, 'configs', 'config_fit.yaml')
 
-with open(yamlpath, 'r') as file:
-    config = yaml.safe_load(file)
+if len(sys.argv) < 2:
+    print("Usage: python -m beamlab21.fit <config_path>")
+    sys.exit(1)
+
+config_path = sys.argv[1] if len(sys.argv) > 1 else 'configs/config_fit.yaml'
+config = load_config(config_path)
+
+print("Loaded config:", config)
 
 #read in necessary parameters    
 telescope_name = config['Telescope_name']

@@ -8,10 +8,14 @@ from beamlab21.lib import *
 from beamlab21 import ROOT_DIR
 
 #read config_compute.yaml file
-yamlpath = os.path.join(ROOT_DIR, 'configs', 'config_compute.yaml')
+if len(sys.argv) < 2:
+    print("Usage: python -m beamlab21.fit <config_path>")
+    sys.exit(1)
 
-with open(yamlpath, 'r') as file:
-    config = yaml.safe_load(file)
+config_path = sys.argv[1] if len(sys.argv) > 1 else 'configs/config_compute.yaml'
+config = load_config(config_path)
+
+print("Loaded config:", config)
 
 freq = config['freq']
 c = 3e8

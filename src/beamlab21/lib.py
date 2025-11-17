@@ -17,8 +17,17 @@ import h5py
 import pandas as pd
 from astropy.io import fits
 from tqdm import tqdm
+import sys
+
 import os
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+
+
+def load_config(path):
+    if not os.path.isfile(path):
+        raise FileNotFoundError(f"Config file not found at {path}")
+    with open(path, 'r') as f:
+        return yaml.safe_load(f)
 
 def NollToQuantum(j):
     n=int(np.ceil((-3+np.sqrt(9+(8*j)))/2))
