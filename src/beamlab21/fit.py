@@ -36,6 +36,10 @@ out_coef_name = config["out_coef_name"]
 out_sp_dir = config['out_sp_dir']
 out_sp_name = config["out_sp_name"]
 
+print("Project root:", get_project_root())
+print("Config file path:", config_path)
+
+
 print("Fitting data from file:", datafile)
 print("Telescope:", telescope_name)
 print("Frequency channel (MHz):", config['frequency'])
@@ -86,7 +90,6 @@ if save_params:
     df_coef.to_csv(coef_path, index=False)
 
     df = pd.DataFrame({"freq(MHz)": [freq], "sigx": [sigx], "sigy": [sigy]})
-    os.path.join(project_root,output_dir)
     sp_name = os.path.join(project_root,out_sp_dir,out_sp_name)
     df.to_csv(sp_name, index=False)
     print(f"Scaling parameters are saved in {sp_name}!\n")

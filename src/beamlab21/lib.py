@@ -78,7 +78,7 @@ def compute_impacts(coeffs, X):
     impacts = np.linalg.norm(X * coeffs[:, None], axis=1)
     return impacts
 
-def load_beam(datafile,error_type='uniform',normalize_data=True):
+def load_beam(datafile):
     if datafile.endswith('.fits'):
         hdul = fits.open(datafile)
         data = hdul[0].data
