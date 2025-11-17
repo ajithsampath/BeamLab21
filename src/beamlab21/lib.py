@@ -124,7 +124,7 @@ class GaussianFit:
         """
         self.freq = freq
         self.x, self.y, self.freq_arr, self.nchan, self.error, self.data_cube = \
-            load_beam(datafile)
+            load_beam(datafile,error_type)
         # Auto-detect coordinate system if requested
         if coord_type == 'auto':
             # Heuristic: if range of x ~ [0, 2π] and min(y) >= 0 => polar (r, θ)
