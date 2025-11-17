@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "BeamLab21"       # matches your package folder name
+name = "beamlab21"       # matches your package folder name
 version = "0.1.0"
 description = "Beam generation and fitting tools for HIRAX (but extendable to other arrays)"
 authors = [
