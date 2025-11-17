@@ -85,11 +85,15 @@ if save_params:
     n_val,m_val = vectorized_NollToQuantum(j)
     coef_jnm = np.column_stack((j, n_val, m_val, coef_reordered))
     coef_jnm =  coef_jnm[coef_jnm[:, 3] != 0.0]
+    if not os.path.exists(os.path.join(project_root,out_coef_dir)):
+        os.makedirs(os.path.join(project_root,out_coef_dir))
     coef_path = os.path.join(project_root, out_coef_dir, out_coef_name)
     df_coef = pd.DataFrame(coef_jnm, columns=['j', 'n', 'm', 'coef'])
     df_coef.to_csv(coef_path, index=False)
 
     df = pd.DataFrame({"freq(MHz)": [freq], "sigx": [sigx], "sigy": [sigy]})
+    if not os.path.exists(os.path.join(project_root,out_sp_dir)):
+        os.makedirs(os.path.join(project_root,out_sp_dir))
     sp_name = os.path.join(project_root,out_sp_dir,out_sp_name)
     df.to_csv(sp_name, index=False)
     print(f"Scaling parameters are saved in {sp_name}!\n")

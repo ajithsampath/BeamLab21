@@ -355,6 +355,8 @@ class ZernikeFit:
         plt.tight_layout()
         plotname = f"BeamFitResults_{freq}MHz with N={N}{plot_format}"
         print("Making the plot.....\n")
+        if not os.path.exists(os.path.join(self.project_root,plot_directory)):
+            os.makedirs(os.path.join(self.project_root,plot_directory))
         plt.savefig(os.path.join(self.project_root, plot_directory, plotname), bbox_inches='tight', dpi=300)
         plt.clf()
         plt.close('all')
@@ -391,6 +393,8 @@ class ZernikeFit:
         
         plotname = f"BeamFitResults_{freq}MHz with N={N}{plot_format}"
         print("Making the plot.....\n")
+        if not os.path.exists(os.path.join(self.project_root,plot_directory)):
+            os.makedirs(os.path.join(self.project_root,plot_directory))
         plt.savefig(os.path.join(self.project_root, plot_directory, plotname), bbox_inches='tight', dpi=300)
         plt.clf()
         plt.close('all')
@@ -420,6 +424,8 @@ class ZernikeFit:
             keep_mask = np.zeros(len(coef_reordered), dtype=bool)
             keep_mask[keep_idx] = True
             # Save reduced coefficients CSV
+            if not os.path.exists(os.path.join(self.project_root,output_dir)):
+                os.makedirs(os.path.join(self.project_root,output_dir))
             reduced_path = os.path.join(self.project_root, output_dir, 'coef_reduced.csv')
             os.makedirs(os.path.dirname(reduced_path), exist_ok=True)
             df_reduced = pd.DataFrame(coef_jnm, columns=['j', 'n', 'm', 'coef'])
