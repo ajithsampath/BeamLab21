@@ -7,7 +7,7 @@ from beamlab21.lib import *
 
 
 
-def run_fit(config_path):
+def run(config_path):
     project_root = get_project_root()
     config = load_config(config_path)
 
@@ -116,7 +116,7 @@ def run_fit(config_path):
 def main():
     #read config_fit.yaml file
     config_path = sys.argv[1] if len(sys.argv) > 1 else 'configs/config_fit.yaml'
-    run_fit(config_path)
+    run(config_path)
 
 if __name__ == "__main__":
     main()
