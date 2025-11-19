@@ -24,16 +24,11 @@ def run(config_path):
     
 
 
-    if config['gen_gaussian_model'] and config['gen_zernike_model']:
-        print("Set either gen_gaussian_model or gen_zernike_model to be true not both!!\n")
-        print("Exiting for now...! Hope you reset the parameters and come back :) \n")
-        sys.exit()
-    elif config['gen_gaussian_model']:
+    if config['gen_gaussian_model']:
         amp = config['gaussian_amp']
         lambdabyDcoef = config['gaussian_lamdabyD_coef']
         sigx = np.rad2deg(lambdabyDcoef*(wvl/Deff))
         sigy = sigx
-        print(sigx,sigy)
         xo,yo = config['gaussian_offset_x'],config['gaussian_offset_y']
         tilt = config['gaussian_rotation']
         gparams = amp, sigx,sigy,xo,yo,tilt
