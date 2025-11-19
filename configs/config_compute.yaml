@@ -7,11 +7,8 @@
   # Grid parameters
   pixels: 256       # number of pixels in x and y
   angular_res: 0.5858   # angular resolution in degrees. This sets the field of view (FOV = pixels * angular_res)
-  
-  # Output parameters
-  output_filename: "ComputedModel__{{ frequency }}"  # output file name
-  output_format: ".npz"      # output file format, options are "npz" or "npy"
   dtype: float32    # numpy data type for array, use float128 if supported
+
 
   # Gaussian model parameters
   gen_gaussian_model: False  # whether to use a Gaussian model for the beam instead of Zernike polynomials
@@ -21,32 +18,36 @@
   gaussian_offset_y: 0.0   # y offset of the Gaussian beam
   gaussian_rotation: 0.0     # rotation angle of the Gaussian beam in degrees
 
+  #adding noise
+  add_noise2gaussian: False
+  gaussian_noise_mean: 0.0
+  gaussian_noise_sigma: 0.0        # noise level to add to the Gaussian beam
+  gaussian_noise_random_seed: 42   # random seed for noise generation
+
   save_gaussian_model: True
   goutput_dir : "outputs"
   goutput_name: "ComputedGaussianModel_{{ frequency }}"  # output file name
   goutput_format: ".npz"      # output file format
 
-  add_noise2gaussian: False
-  gaussian_noise_type: "normal" # type of noise to add, options are "normal" or "uniform"
-  gaussian_noise_mean: 0.0
-  gaussian_noise_sigma: 0.0        # noise level to add to the Gaussian beam
-  gaussian_noise_random_seed: 42   # random seed for noise generation
 
   #Zernike model parameters
-  gen_zernike_model: True  # whether to use Zernike polynomials for the beam
+  #input parameters Coefficients and Scale parameters
   coef_dir: "outputs"
   coef_file: "coefficients_{{ frequency }}.csv" # input file with Zernike coefficients (in Noll notation). A sample file is provided.
   
   scaleparam_dir: "outputs"
   scaleparam_file: "scaleparameters_{{ frequency }}.csv"
 
-  #Adding noise
-  add_noise2zernike: True
-  zernike_noise_mean: 0.0  # noise level to add to Zernike model
-  zernike_noise_sigma: 0.0  # noise level to add to Zernike model
-  zernike_noise_type: "normal" # type of noise to add, options are "normal" or "uniform"
-  zernike_noise_random_seed: 42  # random seed for noise generation 
-
+  #adding noise
+  gen_zernike_model: True  # whether to use Zernike polynomials for the beam
+  add_noise2zernike: False
+  zernike_noise_mean: 0.0
+  zernike_noise_sigma: 0.0        # noise level to add to the Gaussian beam
+  zernike_noise_random_seed: 42   # random seed for noise generation
+  
+  save_zernike_model: True
   zoutput_dir : "outputs"
-  zoutput_name: "ZernikeModel_{{ frequency }}"  # output file name
-  zoutput_format: ".npz"      # output file format
+  zoutput_name: "ComputedZernikeModel__{{ frequency }}"  # output file name
+  zoutput_format: ".npz"      # output file format, options are "npz" or "npy"
+  
+

@@ -21,8 +21,7 @@ def run(config_path):
     x = np.linspace(-angextent/2,angextent/2,config['pixels'])
     y = x
     dtype = config['dtype']
-    scaleparamfile = os.path.join(project_root,config['scaleparam_dir'],config['scaleparam_file']) 
-    coeffile = os.path.join(project_root,config['coef_dir'],config['coef_file']) 
+    
 
 
     if config['gen_gaussian_model'] and config['gen_zernike_model']:
@@ -58,6 +57,8 @@ def run(config_path):
             print("Computed Gaussian model is not saved! Set save_gaussian_model parameters to True in the config_compute.yaml file :)\n")
 
     elif config['gen_zernike_model']:
+        scaleparamfile = os.path.join(project_root,config['scaleparam_dir'],config['scaleparam_file']) 
+        coeffile = os.path.join(project_root,config['coef_dir'],config['coef_file']) 
         ztgen = GenZTBeam(freq,x,y,dtype)
         ztsp_df = pd.read_csv(scaleparamfile)
         sigx,sigy = ztsp_df['sigx'].to_numpy(),ztsp_df['sigy'].to_numpy()
