@@ -10,7 +10,7 @@ from beamlab21.lib import *
 
 def run(config_path):
     project_root = get_project_root()
-    config = load_config(config_path)
+    config = load_config(config_path, context={"frequency": 400})
 
     freq = config['frequency']
     c = 3e8
