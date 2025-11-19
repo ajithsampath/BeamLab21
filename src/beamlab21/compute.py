@@ -12,7 +12,7 @@ def run(config_path):
     project_root = get_project_root()
     config = load_config(config_path)
 
-    freq = config['freq']
+    freq = config['frequency']
     c = 3e8
     wvl = c/(freq*1e6)
     Deff = 4.6
