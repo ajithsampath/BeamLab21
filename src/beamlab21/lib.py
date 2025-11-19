@@ -10,12 +10,10 @@ import matplotlib.pyplot as plt
 from scipy.optimize import fmin,minimize, OptimizeWarning
 import scipy as sp
 from scipy.interpolate import interp1d
-import time
 import yaml
 import os
 import h5py 
 import pandas as pd
-from astropy.io import fits
 from tqdm import tqdm
 import sys
 from jinja2 import Template
@@ -88,11 +86,7 @@ def compute_impacts(coeffs, X):
     return impacts
 
 def load_beam(datafile):
-    if datafile.endswith('.fits'):
-        hdul = fits.open(datafile)
-        data = hdul[0].data
-        hdul.close()
-    elif datafile.endswith('.npy'):
+    if datafile.endswith('.npy'):
         data = np.load(datafile)
     elif datafile.endswith('.npz'):
         data = np.load(datafile)['data']
@@ -116,7 +110,7 @@ def load_beam(datafile):
         df = pd.read_csv(datafile)
         data = df.values  # assuming the entire CSV is the data
     else:
-        raise ValueError("Unsupported file format. Please use .fits, .h5/.hdf5, or .csv files.")
+        raise ValueError("Unsupported file format.")
     
     return x,y,freq_arr,nchan,error,data;
 
@@ -127,16 +121,12 @@ def load_beam(datafile):
 class GaussianFit:
     def __init__(self, datafile, freq, error_type='uniform',
                  normalize_data=True, coord_type='auto'):
-        """
-        Routine to load data from fits/hdf5/csv file.
-        coord_type : 'cartesian', 'polar', or 'auto'
-        """
+
         self.freq = freq
         self.x, self.y, self.freq_arr, self.nchan, self.error, self.data_cube = \
             load_beam(datafile)
-        # Auto-detect coordinate system if requested
         if coord_type == 'auto':
-            # Heuristic: if range of x ~ [0, 2π] and min(y) >= 0 => polar (r, θ)
+           
             if np.all(self.x >= 0) and np.all((self.y >= 0) & (self.y <= 2*np.pi)):
                 coord_type = 'polar'
             else:
@@ -205,15 +195,6 @@ class ZernikeFit:
     def __init__(self, x, y, xo, yo, freq_arr, freq, data, N,
                  error_type='proportional', normalize_data=True,
                  coord_type='auto'):
-        """
-        Parameters:
-        -----------
-        x, y : array-like
-            Coordinates. Interpreted as (x,y) if coord_type='cartesian',
-            or as (r, θ) if coord_type='polar'.
-        coord_type : 'auto' (default), 'cartesian', or 'polar'
-            Coordinate system type.
-        """
         self.pbar = None
         self.coord_type = coord_type
         self.project_root=get_project_root()

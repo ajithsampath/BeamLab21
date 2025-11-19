@@ -16,10 +16,12 @@ dependencies = [
   "matplotlib",
   "astropy",
   "pandas",
-  "h5py"
+  "h5py",
+  "tqdm",
+  "jinja2"
 ]
 
-license = { text = "Apache" }
+license = { text = "MIT license" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
