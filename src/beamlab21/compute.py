@@ -51,7 +51,8 @@ def run(config_path):
         else:
             print("Computed Gaussian model is not saved! Set save_gaussian_model parameters to True in the config_compute.yaml file :)\n")
 
-    elif config['gen_zernike_model']:
+
+    if config['gen_zernike_model']:
         scaleparamfile = os.path.join(project_root,config['scaleparam_dir'],config['scaleparam_file']) 
         coeffile = os.path.join(project_root,config['coef_dir'],config['coef_file']) 
         ztgen = GenZTBeam(freq,x,y,dtype)
@@ -78,7 +79,7 @@ def run(config_path):
         else:
             print("Computed Zernike model is not saved! Set save_zernike_model parameters to True in the config_compute.yaml file :)\n")
 
-    else: 
+    if not config['gen_zernike_model'] or config['gen_zernike_model']: 
         print("Set one out of the two gen_gaussian_model and gen_zernike_model parameters to be true!\n")
         print("Exiting without any computing ... :(\n")
         sys.exit()
