@@ -67,7 +67,7 @@ def run(config_path):
 
         if config['add_noise2zernike']:
             np.random.seed(config['zernike_noise_random_seed']) 
-            znoise = np.random.normal(loc=config['zernike_noise_mean'], scale=config['zernike_noise_sigma'], size=gmodel.shape)
+            znoise = np.random.normal(loc=config['zernike_noise_mean'], scale=config['zernike_noise_sigma'], size=ztmodel.shape)
         else:
             znoise = 0.0
             print("No random noise added to the Gaussian Model...\n")
