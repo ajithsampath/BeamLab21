@@ -22,9 +22,14 @@ def run(config_path):
     y = x
     dtype = config['dtype']
     
+    print("Project root:", get_project_root())
+    print("Config file path:", config_path)
+
+    print("Frequency channel (MHz):", config['frequency'])
 
 
     if config['gen_gaussian_model']:
+        print("Generating Gaussian beam model using theoretical beamwidth...")
         amp = config['gaussian_amp']
         lambdabyDcoef = config['gaussian_lamdabyD_coef']
         sigx = np.rad2deg(lambdabyDcoef*(wvl/Deff))
@@ -42,17 +47,21 @@ def run(config_path):
             print("No random noise added to the Gaussian Model...\n")
 
         gmodel = (gmodel + gnoise).reshape(config['pixels'],config['pixels'])
+        print(f"Computed Gaussian model! Make sure to save it!\n ")
 
         if config['save_gaussian_model']:
             goutput_dir = os.path.join(project_root,config['goutput_dir'])
             goutput_name = config['goutput_name']
             os.makedirs(os.path.join(project_root,goutput_dir), exist_ok=True) 
             np.savez(os.path.join(project_root,goutput_dir,goutput_name),x=x,y=y,data=gmodel)
+            print(f"Computed Gaussian model is saved! check your model in {os.path.join(project_root,goutput_dir,goutput_name)}")
+
         else:
             print("Computed Gaussian model is not saved! Set save_gaussian_model parameters to True in the config_compute.yaml file :)\n")
 
 
     if config['gen_zernike_model']:
+        print("Generating Zernike beam model using provided coefficients and scale parameters...")
         scaleparamfile = os.path.join(project_root,config['scaleparam_dir'],config['scaleparam_file']) 
         coeffile = os.path.join(project_root,config['coef_dir'],config['coef_file']) 
         ztgen = GenZTBeam(freq,x,y,dtype)
@@ -70,12 +79,14 @@ def run(config_path):
             print("No random noise added to the Gaussian Model...\n")
 
         ztmodel = (ztmodel + znoise).reshape(config['pixels'],config['pixels'])
-        
+        print(f"Computed Zernike model! Make sure to save it!\n ")
+
         if config['save_zernike_model']:        
             zoutput_dir = config['zoutput_dir']
             zoutput_name = config['zoutput_name']+config['zoutput_format']
             os.makedirs(os.path.join(project_root,zoutput_dir), exist_ok=True)
             np.savez(os.path.join(project_root,zoutput_dir,zoutput_name),x=x,y=y,data=ztmodel)
+            print(f"Computed Zernike model is saved! check your model in {os.path.join(project_root,zoutput_dir,zoutput_name)}")
         else:
             print("Computed Zernike model is not saved! Set save_zernike_model parameters to True in the config_compute.yaml file :)\n")
 
