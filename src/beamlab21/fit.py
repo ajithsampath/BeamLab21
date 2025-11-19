@@ -54,7 +54,8 @@ def run(config_path):
     if config['save_gaussian_model']:
         goutput_dir = os.path.join(project_root,config['goutput_dir'])
         goutput_name = config['goutput_name']
-        np.savez(os.path.join(project_root,goutput_dir,goutput_name),x=x,y=y,xo=xo,yo=yo,model=gExpected)
+        os.makedirs(goutput_dir, exist_ok=True)
+        np.savez(os.path.join(goutput_dir,goutput_name),x=x,y=y,xo=xo,yo=yo,model=gExpected)
     else:
         print("Fitted main lobe model is not saved! Set save_gaussian_model parameters to True in the config_fit.yaml file :)\n")
 
@@ -90,15 +91,13 @@ def run(config_path):
         n_val,m_val = vectorized_NollToQuantum(j)
         coef_jnm = np.column_stack((j, n_val, m_val, coef_reordered))
         coef_jnm =  coef_jnm[coef_jnm[:, 3] != 0.0]
-        if not os.path.exists(os.path.join(project_root,out_coef_dir)):
-            os.makedirs(os.path.join(project_root,out_coef_dir))
+        os.makedirs(os.path.join(project_root,out_coef_dir), exist_ok=True)
         coef_path = os.path.join(project_root, out_coef_dir, out_coef_name)
         df_coef = pd.DataFrame(coef_jnm, columns=['j', 'n', 'm', 'coef'])
         df_coef.to_csv(coef_path, index=False)
 
         df = pd.DataFrame({"freq(MHz)": [freq], "sigx": [sigx], "sigy": [sigy]})
-        if not os.path.exists(os.path.join(project_root,out_sp_dir)):
-            os.makedirs(os.path.join(project_root,out_sp_dir))
+        os.makedirs(os.path.join(project_root,out_sp_dir), exist_ok=True)
         sp_name = os.path.join(project_root,out_sp_dir,out_sp_name)
         df.to_csv(sp_name, index=False)
         print(f"Scaling parameters are saved in {sp_name}!\n")
@@ -108,6 +107,7 @@ def run(config_path):
     if plot_results:
         plot_format = config['plot_format']
         plot_directory = os.path.join(project_root,config['plot_directory'])
+        os.makedirs(plot_directory, exist_ok=True) 
         ztfit.plot_results_cart(gfit.data,model_beam,freq,config['N'],x,y,plot_format,plot_directory,config['plot_cmap']) 
         print("Plotted and saved...!!!\n")
     else:
@@ -118,7 +118,8 @@ def run(config_path):
     if config['save_zernike_model']:
         zoutput_dir = config['zoutput_dir']
         zoutput_name = config['zoutput_name']+config['zoutput_format']
-        np.savez(os.path.join(project_root,zoutput_dir,zoutput_name),x=x,y=y,xo=xo,yo=yo,model=model_beam)
+        os.makedirs(os.path.join(project_root,zoutput_dir), exist_ok=True) 
+        np.savez(os.path.join(zoutput_dir,zoutput_name),x=x,y=y,xo=xo,yo=yo,model=model_beam)
     else:
         print("Fitted model is not saved! Set save_zernike_model parameters to True in the config_fit.yaml file :)\n")
 

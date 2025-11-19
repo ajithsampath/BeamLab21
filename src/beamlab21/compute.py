@@ -52,6 +52,7 @@ def run(config_path):
         if config['save_gaussian_model']:
             goutput_dir = os.path.join(project_root,config['goutput_dir'])
             goutput_name = config['goutput_name']
+            os.makedirs(os.path.join(project_root,goutput_dir), exist_ok=True) 
             np.savez(os.path.join(project_root,goutput_dir,goutput_name),x=x,y=y,data=gmodel)
         else:
             print("Computed Gaussian model is not saved! Set save_gaussian_model parameters to True in the config_compute.yaml file :)\n")
@@ -76,6 +77,7 @@ def run(config_path):
         if config['save_zernike_model']:        
             zoutput_dir = config['zoutput_dir']
             zoutput_name = config['zoutput_name']+config['zoutput_format']
+            os.makedirs(os.path.join(project_root,zoutput_dir), exist_ok=True)
             np.savez(os.path.join(project_root,zoutput_dir,zoutput_name),x=x,y=y,data=ztmodel)
         else:
             print("Computed Zernike model is not saved! Set save_zernike_model parameters to True in the config_compute.yaml file :)\n")
