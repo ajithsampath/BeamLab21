@@ -27,7 +27,7 @@ def run(config_path):
     if config['gen_gaussian_model'] and config['gen_zernike_model']:
         print("Set either gen_gaussian_model or gen_zernike_model to be true not both!!\n")
         print("Exiting for now...! Hope you reset the parameters and come back :) \n")
-        exit
+        sys.exit()
     elif config['gen_gaussian_model']:
         amp = config['gaussian_amp']
         lambdabyDcoef = config['gaussian_lamdabyD_coef']
@@ -86,7 +86,7 @@ def run(config_path):
     else: 
         print("Set one out of the two gen_gaussian_model and gen_zernike_model parameters to be true!\n")
         print("Exiting without any computing ... :(\n")
-        exit
+        sys.exit()
 
 
 def main():
