@@ -79,7 +79,7 @@ def run(config_path):
         else:
             print("Computed Zernike model is not saved! Set save_zernike_model parameters to True in the config_compute.yaml file :)\n")
 
-    if not config['gen_zernike_model'] or config['gen_zernike_model']: 
+    if not config['gen_zernike_model'] and config['gen_zernike_model']: 
         print("Set one out of the two gen_gaussian_model and gen_zernike_model parameters to be true!\n")
         print("Exiting without any computing ... :(\n")
         sys.exit()
