@@ -68,7 +68,40 @@ def twoD_Gaussian(x,y,params):
     
     return amp*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo) + c*((y-yo)**2)));
 
-        
+
+
+def twoD_Gaussian_polar_track(r, theta, params):
+    amp, sigx, sigy, xo, yo, tilt = params
+
+    xo = float(xo)
+    yo = float(yo)
+    tilt = np.radians(tilt)
+
+    r = np.asarray(r)
+    theta = np.asarray(theta)
+
+    # sanity check
+    if r.shape != theta.shape:
+        raise ValueError("r and theta must have the same shape for track coordinates")
+
+    # polar → cartesian (point-wise)
+    x = r * np.cos(theta)
+    y = r * np.sin(theta)
+
+    ct = np.cos(tilt)
+    st = np.sin(tilt)
+
+    a = (ct**2) / (2 * sigx**2) + (st**2) / (2 * sigy**2)
+    b = -(np.sin(2 * tilt)) / (4 * sigx**2) + (np.sin(2 * tilt)) / (4 * sigy**2)
+    c = (st**2) / (2 * sigx**2) + (ct**2) / (2 * sigy**2)
+
+    dx = x - xo
+    dy = y - yo
+
+    return amp * np.exp(-(a * dx**2 + 2 * b * dx * dy + c * dy**2))
+
+
+
 def reorder_coef(coef):
     
     neg_m_list = []
@@ -250,7 +283,7 @@ class ZernikeFit:
 
         elif self.coord_type == 'polar':
             # Scale radius and keep angle as is
-            rm = self.r / self.sigx  # adjust scaling if needed
+            rm = self.r / np.hypot(self.sigx,self.sigy)  # adjust scaling if needed
             thetam = self.theta
             rm[rm == 0] = 1e-10
 
