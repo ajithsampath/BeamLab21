@@ -1,7 +1,7 @@
 # Example data
 
-The tutorial and the default configs expect `data/Example_cube.npz` — a HIRAX beam
-cube of shape `(n_freq, 256, 256)` with arrays `data`, `x`, `y`, `freq` (GHz).
+The default configs expect `data/Example_cube.npz` — a HIRAX beam cube of shape
+`(n_freq, 256, 256)` with arrays `data`, `x`, `y`, `freq` (GHz).
 
 This file (~39 MB) is **not** tracked in git — it was removed for confidentiality.
 It can be provided on request; contact the collaboration (see the top-level README).

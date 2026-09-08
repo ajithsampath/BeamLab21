@@ -2,7 +2,7 @@
 #Affiliation: University of Geneva
 #Project: HIRAX Beam package
 
-"""Fetch the example beam cube used by the tutorial and default configs.
+"""Fetch the example beam cube used by the default configs.
 
 The cube (~39 MB) is not stored in the repository (removed for confidentiality; it
 can be provided on request via the collaboration). If you have a copy, place it at

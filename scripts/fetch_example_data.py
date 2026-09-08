@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Download the example beam cube used by the tutorial.
+"""Download the example beam cube used by the default configs.
 
 Thin wrapper around ``beamlab21.data.fetch_example_data`` / ``beamlab21 fetch-data``.
 Provide the URL via ``BEAMLAB21_DATA_URL``, ``data/DATA_URL.txt``, or
