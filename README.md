@@ -6,9 +6,10 @@ This tool decomposes a measured/simulated beam into a 2D Gaussian main lobe plus
 Zernike-transform (Bessel) basis, and can regenerate a beam model from saved
 coefficients. See the paper linked under [Publications](#publications) for the method.
 
-It also includes drone-based beam mapping simulation: generating a flight path and
-evaluating a beam model at the (scattered, non-gridded) path coordinates — see
-[`beamlab21.drone`](src/beamlab21/drone.py) and [tests/drone.ipynb](tests/drone.ipynb).
+It also includes drone-based beam mapping simulation (**under development**):
+generating a flight path and evaluating a beam model at the (scattered, non-gridded)
+path coordinates — see [`beamlab21.drone`](src/beamlab21/drone.py) and
+[tests/drone.ipynb](tests/drone.ipynb).
 
 ---
 
@@ -81,7 +82,7 @@ compute.run("configs/config_compute.yaml")
 | `beamlab21.data`     | obtain the example beam cube |
 | `beamlab21.fit` / `beamlab21.compute` | the two analysis workflows |
 | `beamlab21.cli`      | `beamlab21` command-line entry point |
-| `beamlab21.drone`    | drone flight-path generation and pointwise beam evaluation along scattered coordinates |
+| `beamlab21.drone`    | drone flight-path generation and pointwise beam evaluation along scattered coordinates (under development) |
 
 `beamlab21.lib` is a deprecated shim that re-exports the above.
 
@@ -92,7 +93,7 @@ pytest                  # fast, data-free smoke tests
 ruff check src tests
 ```
 
-## Drone-based beam mapping
+## Drone-based beam mapping (under development)
 
 ```python
 from beamlab21.drone import create_drone_path, evaluate_gaussian_on_path, evaluate_zernike_on_path
