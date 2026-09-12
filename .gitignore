@@ -1,7 +1,13 @@
-#Python project .gitignore
+# Python project .gitignore
 
-# Ignore some big data files
+# Large / downloaded data files
 *.h5
+*.hdf5
+data/*.npz
+data/*.npy
+
+# Generated results
+outputs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -29,19 +35,24 @@ build/
 dist/
 *.egg-info/
 
+# Test / lint / coverage caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
 # OS-specific files
-*.DS_Store
-*Thumbs.db
+.DS_Store
+Thumbs.db
 
-# Ignore Jupyter notebook checkpoints
-*.ipynb_checkpoints/
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
 
-# Ignore secrets / config files
+# Secrets / local config
 *.env
 
 # Ignore tests folder
 tests/
 
-# Ignore generated outputs (beam models, fit results, plots)
-outputs/
-
+# Local-only: one line, the Example_cube.npz download URL
+data/DATA_URL.txt

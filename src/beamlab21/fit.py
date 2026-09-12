@@ -1,135 +1,122 @@
 #Author: Ajith Sampath
 #Affiliation: University of Geneva
 
-#Fit gaussian/Zernikes to EMsims or Drone data 
-#Returns fit parameters (gaussian parameters or Zernike Coefficients) and model beam.
-from beamlab21.lib import *
+"""Fit Gaussian / Zernike models to EM-sim or drone beam data.
+
+Returns fit parameters (Gaussian parameters or Zernike coefficients) and a model
+beam, for a single frequency channel.
+"""
+
+import os
+import sys
+
+import numpy as np
+import pandas as pd
+
+from beamlab21.config import load_config
+from beamlab21.fitting import GaussianFit, ZernikeFit
+from beamlab21.io import save_npz
+from beamlab21.paths import default_base_dir, resolve_path, resolve_under
+from beamlab21.plotting import plot_results_cart
+from beamlab21.zernike import NollToQuantum, reorder_coef
 
 
+def run(config_path, base_dir=None):
+    base_dir = base_dir if base_dir is not None else default_base_dir(config_path)
+    config = load_config(config_path)
 
-def run(config_path):
-    project_root = get_project_root()
-    config = load_config(config_path, context={"frequency": 400})
+    telescope_name = config["Telescope_name"]
+    datafile = resolve_under(base_dir, config["data_dir"], config["datafile"])
+    freq = config["frequency"]
+    fac = config["fac"]
+    plot_results = config["plot_results"]
+    init_gparams = np.array(config["init_gparams"])
+    save_params = config["save_params"]
 
-    #read in necessary parameters    
-    telescope_name = config['Telescope_name']
-
-    datafile = os.path.join(project_root,config["data_dir"],config['datafile'])
-    freq = config['frequency']
-    fac = config['fac']
-
-    plot_results = config['plot_results']
-
-    init_gparams = np.array(config['init_gparams'])  # Initial guess for Gaussian sigmas in arcminutes
-
-    
-
-    
-
-    save_params = config['save_params']
-    
-
-    print("Project root:", get_project_root())
+    print("Base directory:", base_dir)
     print("Config file path:", config_path)
-
-
     print("Fitting data from file:", datafile)
     print("Telescope:", telescope_name)
-    print("Frequency channel (MHz):", config['frequency'])
+    print("Frequency channel (MHz):", freq)
 
-    #Initialize GaussianFit class
-    gfit = GaussianFit(datafile,freq,error_type=config['gaussian_error_type'],normalize_data=config['normalize_data'],coord_type=config['coord_type'])
+    gfit = GaussianFit(str(datafile), freq, error_type=config["gaussian_error_type"],
+                       normalize_data=config["normalize_data"], coord_type=config["coord_type"])
 
     print("Data loaded. Shape of observed data:", gfit.data.shape)
     print("Fitting a 2D Gaussian to calculate beam width...\n")
-
-    #Optimize Gaussian fit
     print("Starting Gaussian fit optimization...\n")
 
-    x,y,xo,yo,freq_arr,freq,sigx_gopt,sigy_gopt,gExpected,data,_= gfit.optimize_Gauss(init_gparams,minimize_method = config['gminimize_method'],xtol=config['gtol'],verbose=config['gverbose'])
+    x, y, xo, yo, freq_arr, freq, sigx_gopt, sigy_gopt, gExpected, data, _ = gfit.optimize_Gauss(
+        init_gparams, minimize_method=config["gminimize_method"],
+        xtol=config["gtol"], verbose=config["gverbose"])
 
     print("Gaussian fit completed. Optimized sigx:", sigx_gopt, "sigy:", sigy_gopt)
 
-    #Save Zernike Model into a .npz file
-    if config['save_gaussian_model']:
-        goutput_dir = os.path.join(project_root,config['goutput_dir'])
-        goutput_name = config['goutput_name']
-        os.makedirs(goutput_dir, exist_ok=True)
-        np.savez(os.path.join(goutput_dir,goutput_name),x=x,y=y,xo=xo,yo=yo,model=gExpected)
+    if config["save_gaussian_model"]:
+        goutput_dir = resolve_path(config["goutput_dir"], base_dir)
+        save_npz(goutput_dir, config["goutput_name"], x=x, y=y, xo=xo, yo=yo, model=gExpected)
     else:
-        print("Fitted main lobe model is not saved! Set save_gaussian_model parameters to True in the config_fit.yaml file :)\n")
+        print("Fitted main lobe model is not saved! "
+              "Set save_gaussian_model to True in config_fit.yaml :)\n")
 
-    #Generate Zernike basis
     print("Generating Zernike basis...\n")
-    ztfit = ZernikeFit(x,y,xo,yo,freq_arr,freq,data,config['N'],error_type=config['zernike_error_type'],normalize_data=config['normalize_data'],coord_type=config['coord_type'])
+    ztfit = ZernikeFit(x, y, xo, yo, freq_arr, freq, data, config["N"],
+                       error_type=config["zernike_error_type"],
+                       normalize_data=config["normalize_data"], coord_type=config["coord_type"])
 
-    #Fit data to Zernike basis
-    init_ztparams = [sigx_gopt,sigy_gopt] # Use optimized Gaussian sigmas as initial guess for Zernike fit
+    init_ztparams = [sigx_gopt, sigy_gopt]
 
-    if config['skip_minimise']:
-        sigx,sigy,coef,model_beam= ztfit.NO_optimize_ZT(init_ztparams,fac)
-
+    if config["skip_minimise"]:
+        sigx, sigy, coef, model_beam = ztfit.NO_optimize_ZT(init_ztparams, fac)
     else:
         print("Starting Zernike fit optimization by varying scaling parameters...\n")
-
-        sigx,sigy,coef,model_beam,optfun = ztfit.optimize_ZT(init_ztparams,minimize_method=config['ztminimize_method'],xtol=config['zttol'],maxiter=config['ztmaxiter'])
+        sigx, sigy, coef, model_beam, optfun = ztfit.optimize_ZT(
+            init_ztparams, minimize_method=config["ztminimize_method"],
+            xtol=config["zttol"], maxiter=config["ztmaxiter"])
         print("Zernike fit completed. Fit parameters:", coef)
 
-
     if save_params:
-        out_coef_dir = config['out_coef_dir']
-        out_coef_name = config["out_coef_name"]
-        out_sp_dir = config['out_sp_dir']
-        out_sp_name = config["out_sp_name"]
-        #Reduce coefficients to some percentage contribution energy - to compress them.
+        out_coef_dir = resolve_path(config["out_coef_dir"], base_dir)
+        out_sp_dir = resolve_path(config["out_sp_dir"], base_dir)
+
         coef_reordered = reorder_coef(coef)
-
         j = np.arange(len(coef_reordered))
-        vectorized_NollToQuantum = np.vectorize(NollToQuantum)
-
-        #generate quantum indices
-        n_val,m_val = vectorized_NollToQuantum(j)
+        n_val, m_val = np.vectorize(NollToQuantum)(j)
         coef_jnm = np.column_stack((j, n_val, m_val, coef_reordered))
-        coef_jnm =  coef_jnm[coef_jnm[:, 3] != 0.0]
-        os.makedirs(os.path.join(project_root,out_coef_dir), exist_ok=True)
-        coef_path = os.path.join(project_root, out_coef_dir, out_coef_name)
-        df_coef = pd.DataFrame(coef_jnm, columns=['j', 'n', 'm', 'coef'])
-        df_coef.to_csv(coef_path, index=False)
+        coef_jnm = coef_jnm[coef_jnm[:, 3] != 0.0]
 
-        df = pd.DataFrame({"freq(MHz)": [freq], "sigx": [sigx], "sigy": [sigy]})
-        os.makedirs(os.path.join(project_root,out_sp_dir), exist_ok=True)
-        sp_name = os.path.join(project_root,out_sp_dir,out_sp_name)
-        df.to_csv(sp_name, index=False)
-        print(f"Scaling parameters are saved in {sp_name}!\n")
+        os.makedirs(out_coef_dir, exist_ok=True)
+        coef_path = os.path.join(out_coef_dir, config["out_coef_name"])
+        pd.DataFrame(coef_jnm, columns=["j", "n", "m", "coef"]).to_csv(coef_path, index=False)
 
+        os.makedirs(out_sp_dir, exist_ok=True)
+        sp_path = os.path.join(out_sp_dir, config["out_sp_name"])
+        sp_df = pd.DataFrame({"freq(MHz)": [freq], "sigx": [sigx], "sigy": [sigy]})
+        sp_df.to_csv(sp_path, index=False)
+        print(f"Scaling parameters are saved in {sp_path}!\n")
 
-    #Plot results
     if plot_results:
-        plot_format = config['plot_format']
-        plot_directory = os.path.join(project_root,config['plot_directory'])
-        os.makedirs(plot_directory, exist_ok=True) 
-        ztfit.plot_results_cart(gfit.data,model_beam,freq,config['N'],x,y,plot_format,plot_directory,config['plot_cmap']) 
+        plot_directory = resolve_path(config["plot_directory"], base_dir)
+        plot_results_cart(gfit.data, model_beam, freq, config["N"], x, y,
+                          config["plot_format"], str(plot_directory), config["plot_cmap"])
         print("Plotted and saved...!!!\n")
     else:
         print("The results are not plotted and hence not saved..!!!\n")
 
-
-    #Save Zernike Model into a .npz file
-    if config['save_zernike_model']:
-        zoutput_dir = config['zoutput_dir']
-        zoutput_name = config['zoutput_name']+config['zoutput_format']
-        os.makedirs(os.path.join(project_root,zoutput_dir), exist_ok=True) 
-        np.savez(os.path.join(zoutput_dir,zoutput_name),x=x,y=y,xo=xo,yo=yo,model=model_beam)
+    if config["save_zernike_model"]:
+        zoutput_dir = resolve_path(config["zoutput_dir"], base_dir)
+        name = config["zoutput_name"] + config["zoutput_format"]
+        save_npz(zoutput_dir, name, x=x, y=y, xo=xo, yo=yo, model=model_beam)
     else:
-        print("Fitted model is not saved! Set save_zernike_model parameters to True in the config_fit.yaml file :)\n")
-
+        print("Fitted model is not saved! Set save_zernike_model to True in config_fit.yaml :)\n")
 
     print("Decomposing/Fitting the beam for a single given frequency is done!!\n")
 
+
 def main():
-    #read config_fit.yaml file
-    config_path = sys.argv[1] if len(sys.argv) > 1 else 'configs/config_fit.yaml'
+    config_path = sys.argv[1] if len(sys.argv) > 1 else "configs/config_fit.yaml"
     run(config_path)
+
 
 if __name__ == "__main__":
     main()

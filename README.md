@@ -1,60 +1,98 @@
 # Beam Lab 21
 
-Beam computation/characterization tool for 21cm arrays (inspired by HIRAX).
+Beam computation / characterization tool for 21cm arrays (inspired by HIRAX).
 
-`beamlab21` provides a small pipeline for:
-- **Generating** synthetic beam models (Gaussian or Zernike-basis) on a regular pixel grid.
-- **Fitting** a Gaussian + Zernike decomposition to measured beam data (e.g. EM simulations or drone flight data), producing reusable coefficient/scale-parameter files.
-- **Simulating drone-based beam mapping**: generating a flight path and evaluating a beam model at the (scattered, non-gridded) path coordinates.
+This tool decomposes a measured/simulated beam into a 2D Gaussian main lobe plus a
+Zernike-transform (Bessel) basis, and can regenerate a beam model from saved
+coefficients. See the paper linked under [Publications](#publications) for the method.
+
+It also includes drone-based beam mapping simulation: generating a flight path and
+evaluating a beam model at the (scattered, non-gridded) path coordinates — see
+[`beamlab21.drone`](src/beamlab21/drone.py) and [tests/drone.ipynb](tests/drone.ipynb).
 
 ---
 
-## Installation
+## Install
 
 ```bash
-git clone <repo-url>
-cd BeamPackage
-pip install -e .
+pip install -e ".[dev]"      # editable install + dev tools (pytest, ruff)
 ```
 
-This installs `beamlab21` (Python package under [src/beamlab21/](src/beamlab21/)) along with its dependencies (numpy, scipy, pyyaml, matplotlib, astropy, pandas, h5py, tqdm, jinja2).
+## Example data
 
----
+The example beam cube `data/Example_cube.npz` (~39 MB) is **not** distributed with
+the repo (removed for confidentiality). It can be provided on request — contact the
+collaboration (see [Contact](#contact)).
+
+Once you have a copy, drop it at `data/Example_cube.npz`. To download it from a
+location you control, configure the URL in any of these ways (checked in this
+order): a `--url` flag, the `BEAMLAB21_DATA_URL` environment variable, a
+`data/DATA_URL.txt` file (one line), or the `EXAMPLE_DATA_URL` constant in
+[`src/beamlab21/data.py`](src/beamlab21/data.py); then run `beamlab21 fetch-data`.
+
+## Usage (command line)
+
+```bash
+beamlab21 fetch-data                           # obtain the example cube (see above)
+beamlab21 fit      configs/config_fit.yaml     # fit Gaussian + Zernike models
+beamlab21 compute  configs/config_compute.yaml # regenerate a model from saved coefficients
+```
+
+- `beamlab21 --help` / `beamlab21 <cmd> --help` for all options.
+- `--base-dir DIR` overrides where relative paths in the config resolve (defaults to
+  the config's project directory, else the current directory).
+- `beamlab21-fit` / `beamlab21-compute` are standalone equivalents of the
+  `fit` / `compute` subcommands.
+
+### Configuration
+
+Everything is driven by the two YAML files in [`configs/`](configs/); read the
+inline comments on each parameter before a run. The ones you will usually touch:
+
+| Parameter | File | Meaning |
+|---|---|---|
+| `frequency` | both | frequency channel (MHz) to work on |
+| `N` | `config_fit.yaml` | number of Zernike modes to fit |
+| `skip_minimise` | `config_fit.yaml` | skip scale-parameter optimisation (fast; recommended on a laptop) |
+| `save_params` | `config_fit.yaml` | write `coefficients_*.csv` / `scaleparameters_*.csv` |
+| `pixels`, `angular_res` | `config_compute.yaml` | output grid size / resolution |
+
+Results (models, coefficients, plots) are written to `outputs/` (git-ignored).
+
+### From Python
+
+```python
+from beamlab21 import fit, compute
+fit.run("configs/config_fit.yaml")
+compute.run("configs/config_compute.yaml")
+```
 
 ## Package layout
 
-| Module | Purpose |
+| Module | Responsibility |
 |---|---|
-| [lib.py](src/beamlab21/lib.py) | Core helpers: config loading, Zernike/Noll index conversions, `twoD_Gaussian`, `GaussianFit` and `ZernikeFit`/`GenZTBeam` classes for fitting and generating grid-based beams. |
-| [compute.py](src/beamlab21/compute.py) | CLI entry point to **generate** a Gaussian or Zernike beam model from a config file. |
-| [fit.py](src/beamlab21/fit.py) | CLI entry point to **fit** a Gaussian + Zernike model to beam data from a config file. |
-| [drone.py](src/beamlab21/drone.py) | Drone-based beam mapping: generate a flight path (`create_drone_path`) and evaluate a Gaussian or Zernike beam model pointwise along it (`evaluate_gaussian_on_path` / `evaluate_zernike_on_path`), complementing the grid-based functions in `lib.py`. |
+| `beamlab21.config`   | load Jinja2-templated YAML configs |
+| `beamlab21.paths`    | resolve input/output paths relative to a base directory |
+| `beamlab21.io`       | read beam cubes, write `.npz` results |
+| `beamlab21.zernike`  | Noll ⇄ quantum index bookkeeping |
+| `beamlab21.models`   | analytic 2D Gaussian, generative Zernike-transform beam |
+| `beamlab21.fitting`  | `GaussianFit`, `ZernikeFit` |
+| `beamlab21.plotting` | diagnostic fit/residual plots |
+| `beamlab21.data`     | obtain the example beam cube |
+| `beamlab21.fit` / `beamlab21.compute` | the two analysis workflows |
+| `beamlab21.cli`      | `beamlab21` command-line entry point |
+| `beamlab21.drone`    | drone flight-path generation and pointwise beam evaluation along scattered coordinates |
 
----
+`beamlab21.lib` is a deprecated shim that re-exports the above.
 
-## Usage
-
-Follow [Tutorial.ipynb](Tutorial.ipynb) for the full generate/fit workflow, and [tests/drone.ipynb](tests/drone.ipynb) for the drone mapping workflow.
-
-### Generating a beam model
-
-Edit [configs/config_compute.yaml](configs/config_compute.yaml) and run:
-
-```bash
-python -m beamlab21.compute configs/config_compute.yaml
-```
-
-### Fitting a beam model
-
-Edit [configs/config_fit.yaml](configs/config_fit.yaml) and run:
+## Development
 
 ```bash
-python -m beamlab21.fit configs/config_fit.yaml
+pytest                  # fast, data-free smoke tests
+ruff check src tests
 ```
 
-This fits a Gaussian main lobe followed by a Zernike-basis decomposition to the input data (e.g. [data/Example_cube.npz](data/Example_cube.npz)), and saves the resulting coefficients, scale parameters, and (optionally) plots to `outputs/`.
-
-### Drone-based beam mapping
+## Drone-based beam mapping
 
 ```python
 from beamlab21.drone import create_drone_path, evaluate_gaussian_on_path, evaluate_zernike_on_path
@@ -65,11 +103,11 @@ coords = create_drone_path(width=150.0, height=150.0, dx=4, dy=1, ds=0.5, jitter
 # 2. Evaluate a Gaussian beam along the path
 gaussian_beam = evaluate_gaussian_on_path(coords[:, 0], coords[:, 1], (amp, sigx, sigy, xo, yo, tilt))
 
-# 3. Or evaluate a Zernike beam using coefficients/scale parameters produced by fit.py
+# 3. Or evaluate a Zernike beam using coefficients/scale parameters produced by `beamlab21 fit`
 zernike_beam = evaluate_zernike_on_path(coords[:, 0], coords[:, 1], coeffile="outputs/coefficients_400.csv", spfile="outputs/scaleparameters_400.csv")
 ```
 
-`create_drone_path` supports `"EW"` (East-West scan lines stepping North-South) and `"NS"` (North-South scan lines stepping East-West) sweep directions, with configurable step size (`dx`, `dy`), sample spacing along the track (`ds`), and positional `jitter`. The Zernike coefficient/scale-parameter CSV files are the same ones produced by `fit.py` (`out_coef_name` / `out_sp_name` in [config_fit.yaml](configs/config_fit.yaml)).
+`create_drone_path` supports `"EW"` (East-West scan lines stepping North-South) and `"NS"` (North-South scan lines stepping East-West) sweep directions, with configurable step size (`dx`, `dy`), sample spacing along the track (`ds`), and positional `jitter`. The Zernike coefficient/scale-parameter CSV files are the same ones produced by `beamlab21 fit` (`out_coef_name` / `out_sp_name` in [config_fit.yaml](configs/config_fit.yaml)). See [tests/drone.ipynb](tests/drone.ipynb) for the full worked example.
 
 ---
 
@@ -79,18 +117,12 @@ zernike_beam = evaluate_zernike_on_path(coords[:, 0], coords[:, 1], coeffile="ou
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
----
-
 ## Publications
 
 [![arXiv](https://img.shields.io/badge/arXiv-2412.09527-b31b1b.svg)](https://arxiv.org/abs/2412.09527)
 
 This tool was used in the research article linked above.
 
----
-
 ## Contact
 
-Ajith Sampath  — [ajithsampath1997@gmail.com](mailto:ajithsampath1997@gmail.com)
-
----
+Ajith Sampath — [ajithsampath1997@gmail.com](mailto:ajithsampath1997@gmail.com)
