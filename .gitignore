@@ -42,3 +42,6 @@ dist/
 # Ignore tests folder
 tests/
 
+# Ignore generated outputs (beam models, fit results, plots)
+outputs/
+
