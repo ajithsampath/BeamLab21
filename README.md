@@ -127,3 +127,7 @@ This tool was used in the research article linked above.
 ## Contact
 
 Ajith Sampath — [ajithsampath1997@gmail.com](mailto:ajithsampath1997@gmail.com)
+
+## Acknowledgements
+
+Anthropic's Claude was used to assist with documentation and code structuring in this repository.
