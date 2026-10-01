@@ -7,9 +7,11 @@
 #on a regular pixel grid rather than along an arbitrary track.
 
 import numpy as np
-import pandas as pd
-from scipy.special import jn
 from tqdm import tqdm
+
+from beamlab21.io import load_coefficients, load_scale_params
+from beamlab21.models import gaussian_pointwise
+from beamlab21.zernike import zernike_mode
 
 
 def create_drone_path(
@@ -99,35 +101,20 @@ def create_drone_path(
 def evaluate_gaussian_on_path(x, y, params):
     """
     Evaluate a 2D Gaussian beam pointwise at scattered (x, y) coordinates,
-    e.g. along a drone flight path. Cartesian analogue of
-    beamlab21.lib.twoD_Gaussian_polar_track.
+    e.g. along a drone flight path. Thin wrapper around
+    beamlab21.models.gaussian_pointwise (the same formula used by
+    beamlab21.models.twoD_Gaussian and twoD_Gaussian_polar_track).
 
     params: (amp, sigx, sigy, xo, yo, tilt) with tilt in degrees,
-    matching beamlab21.lib.twoD_Gaussian's convention.
+    matching beamlab21.models.twoD_Gaussian's convention.
     """
-    amp, sigx, sigy, xo, yo, tilt = params
-    xo = float(xo)
-    yo = float(yo)
-    tilt = np.radians(tilt)
-
-    a = (np.cos(tilt) ** 2) / (2 * sigx ** 2) + (np.sin(tilt) ** 2) / (2 * sigy ** 2)
-    b = -(np.sin(2 * tilt)) / (4 * sigx ** 2) + (np.sin(2 * tilt)) / (4 * sigy ** 2)
-    c = (np.sin(tilt) ** 2) / (2 * sigx ** 2) + (np.cos(tilt) ** 2) / (2 * sigy ** 2)
-
-    return amp * np.exp(-(a * (x - xo) ** 2 + 2 * b * (x - xo) * (y - yo) + c * (y - yo) ** 2))
+    return gaussian_pointwise(x, y, params)
 
 
 def load_zernike_coef(coeffile, spfile):
     """Load Zernike (Noll-indexed) coefficients and beam scale parameters from CSV."""
-    dfc = pd.read_csv(coeffile)
-    coef = dfc['coef'].values
-    n = dfc['n'].to_numpy().astype(int)
-    m = dfc['m'].to_numpy().astype(int)
-
-    dfsp = pd.read_csv(spfile)
-    sigx = dfsp['sigx'].values
-    sigy = dfsp['sigy'].values
-
+    _, n, m, coef = load_coefficients(coeffile)
+    sigx, sigy = load_scale_params(spfile)
     return n, m, coef, sigx, sigy
 
 
@@ -135,7 +122,8 @@ def evaluate_zernike_on_path(x, y, coeffile, spfile):
     """
     Evaluate a Zernike-basis beam pointwise at scattered (x, y) coordinates,
     e.g. along a drone flight path. Cartesian analogue of
-    beamlab21.lib.GenZTBeam.basisfunc, which evaluates on a regular grid.
+    beamlab21.models.GenZTBeam.basisfunc, which evaluates on a regular grid;
+    both build on the shared beamlab21.zernike.zernike_mode basis function.
     """
     n_arr, m_arr, coef, sigx, sigy = load_zernike_coef(coeffile, spfile)
     xm, ym = x / sigx, y / sigy
@@ -149,12 +137,7 @@ def evaluate_zernike_on_path(x, y, coeffile, spfile):
         for idx in range(coef.shape[0]):
             n = n_arr[idx]
             m = m_arr[idx]
-            bes = jn(n + 1, rm) / rm
-            nc = np.abs(((2 * n + 1) * (2 * n + 3) * (2 * n + 5)) / (-1) ** n) ** 0.5
-            temp = np.real(
-                nc * np.exp(1j * m * thetam) / ((1j ** m) * 2 * np.pi) * (-1) ** ((n - m) / 2) * bes
-            )
-            basis[idx] = temp.flatten()
+            basis[idx] = zernike_mode(n, m, rm, thetam).flatten()
             pbar.update(100 / coef.shape[0])
             pbar.set_postfix_str(f'{round(pbar.n, 1)}%')
 

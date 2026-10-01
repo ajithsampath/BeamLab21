@@ -7,6 +7,7 @@
 import os
 
 import numpy as np
+import pandas as pd
 
 
 def load_beam(datafile):
@@ -44,3 +45,25 @@ def save_npz(output_dir, name, **arrays):
     path = os.path.join(output_dir, name)
     np.savez(path, **arrays)
     return path
+
+
+def load_coefficients(coeffile):
+    """Load Noll-indexed Zernike coefficients from a CSV with columns j, n, m, coef.
+
+    Returns ``(j, n, m, coef)`` as numpy arrays (``j``/``n``/``m`` as int).
+    """
+    df = pd.read_csv(coeffile)
+    j = df["j"].to_numpy().astype(int)
+    n = df["n"].to_numpy().astype(int)
+    m = df["m"].to_numpy().astype(int)
+    coef = df["coef"].to_numpy()
+    return j, n, m, coef
+
+
+def load_scale_params(spfile):
+    """Load beam scale parameters from a CSV with columns sigx, sigy.
+
+    Returns ``(sigx, sigy)`` as numpy arrays.
+    """
+    df = pd.read_csv(spfile)
+    return df["sigx"].to_numpy(), df["sigy"].to_numpy()

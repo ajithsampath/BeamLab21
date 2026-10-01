@@ -5,9 +5,32 @@
 """Analytic beam models: 2D Gaussian and the generative Zernike-transform beam."""
 
 import numpy as np
-import pandas as pd
-from scipy.special import jn
 from tqdm import tqdm
+
+from beamlab21.io import load_coefficients
+from beamlab21.zernike import zernike_mode
+
+
+def gaussian_pointwise(x, y, params):
+    """Evaluate a rotated 2D Gaussian pointwise at Cartesian coordinates ``(x, y)``.
+
+    ``x``/``y`` may be scalars, a grid (e.g. from ``meshgrid``), or scattered
+    arrays of matching shape. ``params`` = ``[amp, sigx, sigy, xo, yo, tilt_deg]``.
+    This is the shared formula behind :func:`twoD_Gaussian`, :func:`twoD_Gaussian_polar_track`,
+    and :func:`beamlab21.drone.sim_data.evaluate_gaussian_on_path`.
+    """
+    amp, sigx, sigy, xo, yo, tilt = params
+    xo = float(xo)
+    yo = float(yo)
+    tilt = np.radians(tilt)
+
+    a = (np.cos(tilt) ** 2) / (2 * sigx ** 2) + (np.sin(tilt) ** 2) / (2 * sigy ** 2)
+    b = -(np.sin(2 * tilt)) / (4 * sigx ** 2) + (np.sin(2 * tilt)) / (4 * sigy ** 2)
+    c = (np.sin(tilt) ** 2) / (2 * sigx ** 2) + (np.cos(tilt) ** 2) / (2 * sigy ** 2)
+
+    dx = x - xo
+    dy = y - yo
+    return amp * np.exp(-(a * dx ** 2 + 2 * b * dx * dy + c * dy ** 2))
 
 
 def twoD_Gaussian(x, y, params):
@@ -16,18 +39,8 @@ def twoD_Gaussian(x, y, params):
     ``params`` = ``[amp, sigx, sigy, xo, yo, tilt_deg]``. Output shape is
     ``(len(y), len(x))``.
     """
-    amp, sigx, sigy, xo, yo, tilt = params
-    xo = float(xo)
-    yo = float(yo)
-    tilt = np.radians(tilt)
-    x, y = np.meshgrid(x, y)
-    a = (np.cos(tilt) ** 2) / (2 * sigx ** 2) + (np.sin(tilt) ** 2) / (2 * sigy ** 2)
-    b = -(np.sin(2 * tilt)) / (4 * sigx ** 2) + (np.sin(2 * tilt)) / (4 * sigy ** 2)
-    c = (np.sin(tilt) ** 2) / (2 * sigx ** 2) + (np.cos(tilt) ** 2) / (2 * sigy ** 2)
-
-    return amp * np.exp(
-        -(a * ((x - xo) ** 2) + 2 * b * (x - xo) * (y - yo) + c * ((y - yo) ** 2))
-    )
+    xg, yg = np.meshgrid(x, y)
+    return gaussian_pointwise(xg, yg, params)
 
 
 def twoD_Gaussian_polar_track(r, theta, params):
@@ -36,11 +49,6 @@ def twoD_Gaussian_polar_track(r, theta, params):
     ``r`` and ``theta`` must share the same shape; ``params`` =
     ``[amp, sigx, sigy, xo, yo, tilt_deg]``.
     """
-    amp, sigx, sigy, xo, yo, tilt = params
-    xo = float(xo)
-    yo = float(yo)
-    tilt = np.radians(tilt)
-
     r = np.asarray(r)
     theta = np.asarray(theta)
     if r.shape != theta.shape:
@@ -48,16 +56,7 @@ def twoD_Gaussian_polar_track(r, theta, params):
 
     x = r * np.cos(theta)
     y = r * np.sin(theta)
-
-    ct = np.cos(tilt)
-    st = np.sin(tilt)
-    a = (ct ** 2) / (2 * sigx ** 2) + (st ** 2) / (2 * sigy ** 2)
-    b = -(np.sin(2 * tilt)) / (4 * sigx ** 2) + (np.sin(2 * tilt)) / (4 * sigy ** 2)
-    c = (st ** 2) / (2 * sigx ** 2) + (ct ** 2) / (2 * sigy ** 2)
-
-    dx = x - xo
-    dy = y - yo
-    return amp * np.exp(-(a * dx ** 2 + 2 * b * dx * dy + c * dy ** 2))
+    return gaussian_pointwise(x, y, params)
 
 
 class GenZTBeam:
@@ -73,11 +72,7 @@ class GenZTBeam:
         """Load coefficients and (j, n, m) indices from a CSV file."""
         if not coeffile.endswith(".csv"):
             raise ValueError("Unsupported file format. Please use .csv files for Coefficients.\n")
-        df = pd.read_csv(coeffile)
-        self.coef = df["coef"].values
-        self.j = df["j"].to_numpy().astype(int)
-        self.n = df["n"].to_numpy().astype(int)
-        self.m = df["m"].to_numpy().astype(int)
+        self.j, self.n, self.m, self.coef = load_coefficients(coeffile)
         return None
 
     def basisfunc(self, sigx, sigy):
@@ -94,11 +89,7 @@ class GenZTBeam:
             for idx in range(self.coef.shape[0]):
                 n = self.n[idx]
                 m = self.m[idx]
-                Bes = (jn(n + 1, rm)) / rm
-                nc = np.abs(((2 * n + 1) * (2 * n + 3) * (2 * n + 5)) / (-1) ** n) ** 0.5
-                phase = np.exp(1j * m * thetam) / ((1j ** m) * 2 * np.pi)
-                temp = np.real(nc * phase * (-1) ** ((n - m) / 2) * Bes)
-                self.Basis[idx] = temp.flatten()
+                self.Basis[idx] = zernike_mode(n, m, rm, thetam).flatten()
                 pbar.update(100 / self.coef.shape[0])
                 pbar.set_postfix_str(f"{round(pbar.n, 1)}%")
         return self.Basis

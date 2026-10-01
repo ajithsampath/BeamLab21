@@ -2,9 +2,10 @@
 #Affiliation: University of Geneva
 #Project: HIRAX Beam package
 
-"""Zernike / Noll index bookkeeping."""
+"""Zernike / Noll index bookkeeping and basis evaluation."""
 
 import numpy as np
+from scipy.special import jn
 
 
 def NollToQuantum(j):
@@ -31,6 +32,22 @@ def find_min_full_N_for_Nprime(Nprime, noll_to_quantum=NollToQuantum):
             if count == Nprime:
                 return j + 1  # +1 because j is 0-based index
         j += 1
+
+
+def zernike_mode(n, m, rm, thetam):
+    """Evaluate one Noll-indexed Bessel/Zernike-transform basis mode.
+
+    ``rm``, ``thetam`` are (scaled) polar coordinates, scalar or array; ``n``,
+    ``m`` are the quantum numbers for a single valid mode (``n >= abs(m) >= 0``,
+    ``n - abs(m)`` even). This is the shared basis building block used when
+    fitting (:class:`beamlab21.fitting.ZernikeFit`), generating on a grid
+    (:class:`beamlab21.models.GenZTBeam`), and evaluating along scattered
+    points (:mod:`beamlab21.drone.sim_data`).
+    """
+    bes = jn(n + 1, rm) / rm
+    nc = np.abs(((2 * n + 1) * (2 * n + 3) * (2 * n + 5)) / (-1) ** n) ** 0.5
+    phase = np.exp(1j * m * thetam) / ((1j ** m) * 2 * np.pi)
+    return np.real(nc * phase * (-1) ** ((n - m) / 2) * bes)
 
 
 def reorder_coef(coef):

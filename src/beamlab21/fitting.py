@@ -7,12 +7,11 @@
 import numpy as np
 import scipy as sp
 from scipy.optimize import minimize
-from scipy.special import jn
 from tqdm import tqdm
 
 from beamlab21.io import load_beam
 from beamlab21.models import twoD_Gaussian
-from beamlab21.zernike import NollToQuantum, find_min_full_N_for_Nprime
+from beamlab21.zernike import NollToQuantum, find_min_full_N_for_Nprime, zernike_mode
 
 
 class GaussianFit:
@@ -154,13 +153,7 @@ class ZernikeFit:
             for j in range(0, self.N_full):
                 n, m = NollToQuantum(j)
                 if n >= 0 and n >= abs(m) and (n - abs(m)) % 2 == 0 and m >= 0:
-                    Bes = (jn(n + 1, rm)) / rm
-                    nc = np.abs(((2 * n + 1) * (2 * n + 3) * (2 * n + 5)) / (-1) ** n) ** 0.5
-                    temp = np.real(
-                        nc * (np.exp(1j * m * thetam)) / ((1j ** m) * 2 * np.pi)
-                         * (-1) ** ((n - m) // 2) * Bes
-                    )
-                    self.Basis[count] = temp.flatten()
+                    self.Basis[count] = zernike_mode(n, m, rm, thetam).flatten()
                     count += 1
                 pbar.update(100 / self.N_full)
                 pbar.set_postfix_str(f"{round(pbar.n, 1)}%")

@@ -6,10 +6,13 @@ This tool decomposes a measured/simulated beam into a 2D Gaussian main lobe plus
 Zernike-transform (Bessel) basis, and can regenerate a beam model from saved
 coefficients. See the paper linked under [Publications](#publications) for the method.
 
-It also includes drone-based beam mapping simulation (**under development**):
-generating a flight path and evaluating a beam model at the (scattered, non-gridded)
-path coordinates — see [`beamlab21.drone`](src/beamlab21/drone.py) and
-[tests/drone.ipynb](tests/drone.ipynb).
+It also includes drone-based beam mapping (**under development**): generating a
+flight path and evaluating a beam model at the (scattered, non-gridded) path
+coordinates — see [`beamlab21.drone.sim_data`](src/beamlab21/drone/sim_data.py) and
+[tests/drone.ipynb](tests/drone.ipynb). Fitting a beam model back to real
+drone-track measurements is sketched out in
+[`beamlab21.drone.fit_data`](src/beamlab21/drone/fit_data.py) but not yet
+implemented.
 
 ---
 
@@ -50,13 +53,13 @@ beamlab21 compute  configs/config_compute.yaml # regenerate a model from saved c
 Everything is driven by the two YAML files in [`configs/`](configs/); read the
 inline comments on each parameter before a run. The ones you will usually touch:
 
-| Parameter | File | Meaning |
-|---|---|---|
-| `frequency` | both | frequency channel (MHz) to work on |
-| `N` | `config_fit.yaml` | number of Zernike modes to fit |
-| `skip_minimise` | `config_fit.yaml` | skip scale-parameter optimisation (fast; recommended on a laptop) |
-| `save_params` | `config_fit.yaml` | write `coefficients_*.csv` / `scaleparameters_*.csv` |
-| `pixels`, `angular_res` | `config_compute.yaml` | output grid size / resolution |
+| Parameter                   | File                    | Meaning                                                           |
+| --------------------------- | ----------------------- | ----------------------------------------------------------------- |
+| `frequency`               | both                    | frequency channel (MHz) to work on                                |
+| `N`                       | `config_fit.yaml`     | number of Zernike modes to fit                                    |
+| `skip_minimise`           | `config_fit.yaml`     | skip scale-parameter optimisation (fast; recommended on a laptop) |
+| `save_params`             | `config_fit.yaml`     | write`coefficients_*.csv` / `scaleparameters_*.csv`           |
+| `pixels`, `angular_res` | `config_compute.yaml` | output grid size / resolution                                     |
 
 Results (models, coefficients, plots) are written to `outputs/` (git-ignored).
 
@@ -70,19 +73,20 @@ compute.run("configs/config_compute.yaml")
 
 ## Package layout
 
-| Module | Responsibility |
-|---|---|
-| `beamlab21.config`   | load Jinja2-templated YAML configs |
-| `beamlab21.paths`    | resolve input/output paths relative to a base directory |
-| `beamlab21.io`       | read beam cubes, write `.npz` results |
-| `beamlab21.zernike`  | Noll ⇄ quantum index bookkeeping |
-| `beamlab21.models`   | analytic 2D Gaussian, generative Zernike-transform beam |
-| `beamlab21.fitting`  | `GaussianFit`, `ZernikeFit` |
-| `beamlab21.plotting` | diagnostic fit/residual plots |
-| `beamlab21.data`     | obtain the example beam cube |
-| `beamlab21.fit` / `beamlab21.compute` | the two analysis workflows |
-| `beamlab21.cli`      | `beamlab21` command-line entry point |
-| `beamlab21.drone`    | drone flight-path generation and pointwise beam evaluation along scattered coordinates (under development) |
+| Module                                    | Responsibility                                                                                             |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `beamlab21.config`                      | load Jinja2-templated YAML configs                                                                         |
+| `beamlab21.paths`                       | resolve input/output paths relative to a base directory                                                    |
+| `beamlab21.io`                          | read beam cubes, write`.npz` results                                                                     |
+| `beamlab21.zernike`                     | Noll ⇄ quantum index bookkeeping                                                                          |
+| `beamlab21.models`                      | analytic 2D Gaussian, generative Zernike-transform beam                                                    |
+| `beamlab21.fitting`                     | `GaussianFit`, `ZernikeFit`                                                                            |
+| `beamlab21.plotting`                    | diagnostic fit/residual plots                                                                              |
+| `beamlab21.data`                        | obtain the example beam cube                                                                               |
+| `beamlab21.fit` / `beamlab21.compute` | the two analysis workflows                                                                                 |
+| `beamlab21.cli`                         | `beamlab21` command-line entry point                                                                     |
+| `beamlab21.drone.sim_data`              | drone flight-path generation and pointwise beam evaluation along scattered coordinates (under development) |
+| `beamlab21.drone.fit_data`              | fit a beam model to real drone-track measurements — stub, not yet implemented                             |
 
 `beamlab21.lib` is a deprecated shim that re-exports the above.
 
@@ -109,6 +113,9 @@ zernike_beam = evaluate_zernike_on_path(coords[:, 0], coords[:, 1], coeffile="ou
 ```
 
 `create_drone_path` supports `"EW"` (East-West scan lines stepping North-South) and `"NS"` (North-South scan lines stepping East-West) sweep directions, with configurable step size (`dx`, `dy`), sample spacing along the track (`ds`), and positional `jitter`. The Zernike coefficient/scale-parameter CSV files are the same ones produced by `beamlab21 fit` (`out_coef_name` / `out_sp_name` in [config_fit.yaml](configs/config_fit.yaml)). See [tests/drone.ipynb](tests/drone.ipynb) for the full worked example.
+
+Going the other way — fitting a beam model to real drone-track measurements instead
+of simulating one — is on the works!!!!
 
 ---
 
