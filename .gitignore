@@ -51,8 +51,5 @@ Thumbs.db
 # Secrets / local config
 *.env
 
-# Ignore tests folder
-tests/
-
 # Local-only: one line, the Example_cube.npz download URL
 data/DATA_URL.txt
