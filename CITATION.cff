@@ -1,0 +1,65 @@
+cff-version: 1.2.0
+message: >-
+  If you use this software, please cite both the software itself (below)
+  and the paper it was developed for (see preferred-citation).
+title: BeamLab21
+abstract: >-
+  Beam computation / characterization tool for 21cm arrays (inspired by
+  HIRAX). Decomposes a measured/simulated beam into a 2D Gaussian main lobe
+  plus a Zernike-transform (Bessel) basis, and regenerates a beam model
+  from saved coefficients.
+authors:
+  - family-names: Sampath
+    given-names: Ajith
+    affiliation: University of Geneva
+    orcid: "https://orcid.org/0000-0002-0015-3870"
+license: MIT
+repository-code: "https://github.com/ajithsampath/BeamLab21"
+version: 0.1.0
+date-released: "2026-10-06"
+preferred-citation:
+  type: article
+  title: "Primary Beam Chromaticity in HIRAX: I. Characterization from Simulations and Power Spectrum Implications"
+  authors:
+    - family-names: Sampath
+      given-names: Ajith
+    - family-names: Crichton
+      given-names: Devin
+    - family-names: Moodley
+      given-names: Kavilan
+    - family-names: Chiang
+      given-names: H. Cynthia
+    - family-names: De Lera Acedo
+      given-names: Eloy
+    - family-names: Dlamini
+      given-names: Simthembile
+    - family-names: Gaddam
+      given-names: Sindhu
+    - family-names: Gerodias
+      given-names: Kit M.
+    - family-names: Gueuning
+      given-names: Quentin
+    - family-names: Gupta
+      given-names: N.
+    - family-names: Hitz
+      given-names: Pascal
+    - family-names: Karigiri Madhusudhan
+      given-names: Aditya Krishna
+    - family-names: Krishna
+      given-names: Shreyam Parth
+    - family-names: Mugundhan
+      given-names: V.
+    - family-names: Retana-Montenegro
+      given-names: Edwin
+    - family-names: Saliwanchik
+      given-names: Benjamin R.B.
+    - family-names: Santos
+      given-names: Mario G.
+    - family-names: Walters
+      given-names: Anthony
+  year: 2024
+  identifiers:
+    - type: other
+      value: "arXiv:2412.09527"
+      description: arXiv preprint
+  url: "https://arxiv.org/abs/2412.09527"
