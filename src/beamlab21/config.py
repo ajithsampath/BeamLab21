@@ -1,6 +1,6 @@
 #Author: Ajith Sampath
 #Affiliation: University of Geneva
-#Project: HIRAX Beam package
+#Project: BeamLab21
 
 """Configuration loading: Jinja2-templated YAML."""
 

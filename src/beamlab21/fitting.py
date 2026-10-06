@@ -1,6 +1,6 @@
 #Author: Ajith Sampath
 #Affiliation: University of Geneva
-#Project: HIRAX Beam package
+#Project: BeamLab21
 
 """Gaussian and Zernike-transform fitting of a single-frequency beam slice."""
 
@@ -10,7 +10,7 @@ from scipy.optimize import minimize
 from tqdm import tqdm
 
 from beamlab21.io import load_beam
-from beamlab21.models import twoD_Gaussian
+from beamlab21.models import gaussian_pointwise, twoD_Gaussian
 from beamlab21.zernike import NollToQuantum, find_min_full_N_for_Nprime, zernike_mode
 
 
@@ -30,11 +30,13 @@ class GaussianFit:
                 coord_type = "cartesian"
         self.coord_type = coord_type
 
-        # Convert polar -> Cartesian for fitting, if needed
+        # For polar data: build the 2D Cartesian grid from the 1D r/theta axes.
+        # self.x/self.y stay as the original axis arrays so ZernikeFit receives them.
         if self.coord_type == "polar":
             r, theta = self.x, self.y
-            self.x = r * np.cos(theta)
-            self.y = r * np.sin(theta)
+            R, THETA = np.meshgrid(r, theta)      # shape (ny, nx)
+            self._X_cart = R * np.cos(THETA)      # 2D Cartesian x
+            self._Y_cart = R * np.sin(THETA)      # 2D Cartesian y
 
         chan = int(np.argmin(np.abs(self.freq_arr - freq)))
         self.data = self.data_cube[chan]
@@ -57,7 +59,10 @@ class GaussianFit:
 
     def g_chisq(self, params):
         """Reduced chi-square for the Gaussian fit."""
-        self.gExpected = twoD_Gaussian(self.x, self.y, params)
+        if self.coord_type == "polar":
+            self.gExpected = gaussian_pointwise(self._X_cart, self._Y_cart, params)
+        else:
+            self.gExpected = twoD_Gaussian(self.x, self.y, params)
         Expected = self.gExpected.flatten()
         data = self.data.flatten()
         k = len(params)
@@ -139,9 +144,12 @@ class ZernikeFit:
             rm[rm == 0] = 1e-10
             thetam = np.arctan2(ym, xm)
         elif self.coord_type == "polar":
-            rm = self.r / np.hypot(self.sigx, self.sigy)
-            thetam = self.theta
+            R, THETA = np.meshgrid(self.r, self.theta)    # shape (ny, nx)
+            X_cart = R * np.cos(THETA)
+            Y_cart = R * np.sin(THETA)
+            rm = np.hypot(X_cart / self.sigx, Y_cart / self.sigy)
             rm[rm == 0] = 1e-10
+            thetam = np.arctan2(Y_cart / self.sigy, X_cart / self.sigx)
 
         self.Basis = np.zeros((int(self.N_full), int(len(rm.flatten()))), dtype="float32")
         count = 0

@@ -5,6 +5,7 @@
 *.hdf5
 data/*.npz
 data/*.npy
+data/*.txt
 
 # Generated results
 outputs/
@@ -51,5 +52,10 @@ Thumbs.db
 # Secrets / local config
 *.env
 
-# Local-only: one line, the Example_cube.npz download URL
-data/DATA_URL.txt
+# Local-only scratch notebook for developing drone-fit against real (private)
+# flight-track data, before the working version is merged into
+# beamlab21.drone.fit_data
+tests/drone_fit_dev.ipynb
+
+# Local tutorial notebook (not distributed — run locally to verify functionality)
+tutorial.ipynb

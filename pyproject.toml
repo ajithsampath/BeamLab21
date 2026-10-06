@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "beamlab21"
 version = "0.1.0"
-description = "Beam generation and fitting tools for HIRAX (but extendable to other arrays)"
+description = "Beam generation and fitting tools for 21cm arrays, inspired by and tested on HIRAX"
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [
@@ -17,7 +17,6 @@ dependencies = [
   "scipy>=1.10",
   "pyyaml>=6.0",
   "matplotlib>=3.6",
-  "astropy>=5.1",
   "pandas>=1.5",
   "h5py>=3.7",
   "tqdm>=4.64",
@@ -38,6 +37,7 @@ where = ["src"]
 [tool.ruff]
 line-length = 100
 src = ["src", "tests"]
+extend-exclude = ["tests/drone_fit_dev.ipynb"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

@@ -1,6 +1,6 @@
 #Author: Ajith Sampath
 #Affiliation: University of Geneva
-#Project: HIRAX Beam package
+#Project: BeamLab21
 
 """Zernike / Noll index bookkeeping and basis evaluation."""
 

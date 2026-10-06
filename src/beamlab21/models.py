@@ -1,6 +1,6 @@
 #Author: Ajith Sampath
 #Affiliation: University of Geneva
-#Project: HIRAX Beam package
+#Project: BeamLab21
 
 """Analytic beam models: 2D Gaussian and the generative Zernike-transform beam."""
 
@@ -62,11 +62,12 @@ def twoD_Gaussian_polar_track(r, theta, params):
 class GenZTBeam:
     """Generate a beam from stored Zernike-transform coefficients + scale params."""
 
-    def __init__(self, freq, x, y, dtype):
+    def __init__(self, freq, x, y, dtype, coord_type="cartesian"):
         self.freq = freq
         self.x = x
         self.y = y
         self.dtype = dtype
+        self.coord_type = coord_type
 
     def load_coef(self, coeffile):
         """Load coefficients and (j, n, m) indices from a CSV file."""
@@ -78,10 +79,18 @@ class GenZTBeam:
     def basisfunc(self, sigx, sigy):
         """Build the Bessel-derived basis matrix for the loaded coefficients."""
         self.sigx, self.sigy = sigx, sigy
-        xm, ym = np.meshgrid(self.x / self.sigx, self.y / self.sigy)
-        rm = np.hypot(xm, ym)
-        rm[rm == 0] = 1e-10
-        thetam = np.arctan2(ym, xm)
+        if self.coord_type == "polar":
+            R, THETA = np.meshgrid(self.x, self.y)   # x=r axis, y=theta axis
+            X_cart = R * np.cos(THETA)
+            Y_cart = R * np.sin(THETA)
+            rm = np.hypot(X_cart / self.sigx, Y_cart / self.sigy)
+            rm[rm == 0] = 1e-10
+            thetam = np.arctan2(Y_cart / self.sigy, X_cart / self.sigx)
+        else:
+            xm, ym = np.meshgrid(self.x / self.sigx, self.y / self.sigy)
+            rm = np.hypot(xm, ym)
+            rm[rm == 0] = 1e-10
+            thetam = np.arctan2(ym, xm)
 
         self.Basis = np.zeros((len(self.coef), len(rm.flatten())), dtype=self.dtype)
         print("Constructing the basis set for the given coefficients and scale parameters...")

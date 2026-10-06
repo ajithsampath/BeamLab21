@@ -1,13 +1,16 @@
   # Configuration file for BEACH
 
   # Telescope parameters
-  Telescope_name: "Hirax"  # "Hirax" is the only supported option currently. This sets the aperture diameter and frequency range.
+  Telescope_name: "Hirax"  # free-text label for the array this data is from; not used to branch any behaviour
   frequency: 400  # frequency range in Hz
+  aperture_diameter: 4.6   # effective aperture diameter in meters (sets the Gaussian model's theoretical lambda/D beamwidth); 4.6m is HIRAX's
 
   # Grid parameters
   pixels: 256       # number of pixels in x and y
   angular_res: 0.5858   # angular resolution in degrees. This sets the field of view (FOV = pixels * angular_res)
   dtype: float32    # numpy data type for array, use float128 if supported
+  coord_type: "cartesian"  # output coordinate system: "cartesian" (default) or "polar"
+                            # polar: x = r axis [0, FOV/2], y = theta axis [0, 2π)
 
 
   # Gaussian model parameters

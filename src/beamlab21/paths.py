@@ -1,6 +1,6 @@
 #Author: Ajith Sampath
 #Affiliation: University of Geneva
-#Project: HIRAX Beam package
+#Project: BeamLab21
 
 """Path helpers.
 
@@ -9,8 +9,6 @@ that the caller controls, so the package works whether it is run from a source
 checkout, a pip-installed environment, or an arbitrary working directory.
 """
 
-import os
-import warnings
 from pathlib import Path
 
 
@@ -42,14 +40,3 @@ def default_base_dir(config_path):
     if cfg.parent.name == "configs":
         return cfg.parent.parent
     return Path.cwd()
-
-
-def get_project_root():
-    """Deprecated: use :func:`resolve_path` / :func:`default_base_dir` instead."""
-    warnings.warn(
-        "get_project_root() is deprecated; paths are now resolved relative to a "
-        "caller-supplied base_dir. This shim returns the current working directory.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return os.getcwd()

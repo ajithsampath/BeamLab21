@@ -3,13 +3,12 @@
   # Configuration file for BEACH
 
   # Telescope parameters
-  Telescope_name: "Hirax"  # "Hirax" is the only supported option currently. This sets the aperture diameter and frequency range.
+  Telescope_name: "Hirax"  # free-text label for the array this data is from; not used to branch any behaviour
   frequency: 400  # frequency channel to fit in MHz
-  aperture_diameter: 6.0   # aperture diameter in meters, default for Hirax is 6m
 
   # Data parameters
   data_dir: "data"
-  datafile: "Example_cube.npz"  # path to the input data file (FITS, HDF5, NPY, NPZ, or TXT format)
+  datafile: "Example_cube.npz"  # path to the input data file (.npz or .h5/.hdf5; see data/README.md for the expected layout)
   normalize_data: True     # whether to normalize the data before fitting
   coord_type: 'auto'        # type of coordinate system the data is in. Options are "cartesian", "polar" or "auto"
   

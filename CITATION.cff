@@ -4,10 +4,10 @@ message: >-
   and the paper it was developed for (see preferred-citation).
 title: BeamLab21
 abstract: >-
-  Beam computation / characterization tool for 21cm arrays (inspired by
-  HIRAX). Decomposes a measured/simulated beam into a 2D Gaussian main lobe
-  plus a Zernike-transform (Bessel) basis, and regenerates a beam model
-  from saved coefficients.
+  Beam computation / characterization tool for 21cm arrays, inspired by and
+  tested on HIRAX. Decomposes a measured/simulated beam into a 2D Gaussian
+  main lobe plus a Zernike-transform (Bessel) basis, and regenerates a beam
+  model from saved coefficients.
 authors:
   - family-names: Sampath
     given-names: Ajith

@@ -1,7 +1,7 @@
 #Author: Ajith Sampath
 #Affiliation: University of Geneva
 
-"""Compute a HIRAX beam model from Zernike coefficients or Gaussian parameters."""
+"""Compute a beam model from Zernike coefficients or Gaussian parameters."""
 
 import sys
 
@@ -10,22 +10,30 @@ import pandas as pd
 
 from beamlab21.config import load_config
 from beamlab21.io import save_npz
-from beamlab21.models import GenZTBeam, twoD_Gaussian
+from beamlab21.models import GenZTBeam, gaussian_pointwise, twoD_Gaussian
 from beamlab21.paths import default_base_dir, resolve_path, resolve_under
 
 
-def run(config_path, base_dir=None):
+def run(config_path, base_dir=None, coord_type=None):
     base_dir = base_dir if base_dir is not None else default_base_dir(config_path)
     config = load_config(config_path)
+    if coord_type is not None:
+        config["coord_type"] = coord_type
+    _coord = config.get("coord_type", "cartesian")
 
     freq = config["frequency"]
     c = 3e8
     wvl = c / (freq * 1e6)
-    Deff = 4.6
+    Deff = config["aperture_diameter"]
 
     angextent = config["pixels"] * config["angular_res"]
-    x = np.linspace(-angextent / 2, angextent / 2, config["pixels"])
-    y = x
+    if _coord == "polar":
+        # Polar output grid: x = r axis [0, angextent/2], y = theta axis [0, 2π)
+        x = np.linspace(0, angextent / 2, config["pixels"])
+        y = np.linspace(0, 2 * np.pi, config["pixels"], endpoint=False)
+    else:
+        x = np.linspace(-angextent / 2, angextent / 2, config["pixels"])
+        y = x
     dtype = config["dtype"]
 
     print("Base directory:", base_dir)
@@ -41,7 +49,11 @@ def run(config_path, base_dir=None):
         xo, yo = config["gaussian_offset_x"], config["gaussian_offset_y"]
         tilt = config["gaussian_rotation"]
         gparams = amp, sigx, sigy, xo, yo, tilt
-        gmodel = twoD_Gaussian(x, y, gparams)
+        if _coord == "polar":
+            R, THETA = np.meshgrid(x, y)
+            gmodel = gaussian_pointwise(R * np.cos(THETA), R * np.sin(THETA), gparams)
+        else:
+            gmodel = twoD_Gaussian(x, y, gparams)
 
         if config["add_noise2gaussian"]:
             np.random.seed(config["gaussian_noise_random_seed"])
@@ -66,7 +78,7 @@ def run(config_path, base_dir=None):
         print("Generating Zernike beam model using provided coefficients and scale parameters...")
         spfile = resolve_under(base_dir, config["scaleparam_dir"], config["scaleparam_file"])
         coeffile = resolve_under(base_dir, config["coef_dir"], config["coef_file"])
-        ztgen = GenZTBeam(freq, x, y, dtype)
+        ztgen = GenZTBeam(freq, x, y, dtype, coord_type=_coord)
         ztsp_df = pd.read_csv(spfile)
         sigx, sigy = ztsp_df["sigx"].to_numpy(), ztsp_df["sigy"].to_numpy()
         ztgen.load_coef(str(coeffile))

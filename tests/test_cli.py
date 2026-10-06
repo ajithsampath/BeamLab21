@@ -1,7 +1,6 @@
 import pytest
 
 from beamlab21.cli import build_parser
-from beamlab21.data import resolve_data_url
 
 
 def test_parser_requires_subcommand():
@@ -14,20 +13,31 @@ def test_fit_subcommand_parsed():
     assert args.command == "fit"
     assert args.config == "configs/config_fit.yaml"
     assert args.base_dir == "/tmp"
+    assert args.coord is None
 
 
-def test_fetch_data_flags_parsed():
-    args = build_parser().parse_args(["fetch-data", "--url", "http://example/x.npz", "--force"])
-    assert args.command == "fetch-data"
-    assert args.url == "http://example/x.npz"
-    assert args.force is True
+def test_fit_coord_flag_polar():
+    args = build_parser().parse_args(["fit", "configs/config_fit.yaml", "--coord", "polar"])
+    assert args.coord == "polar"
 
 
-def test_resolve_data_url_prefers_explicit(monkeypatch):
-    monkeypatch.delenv("BEAMLAB21_DATA_URL", raising=False)
-    assert resolve_data_url("http://example/cube.npz") == "http://example/cube.npz"
+def test_fit_coord_flag_cartesian():
+    args = build_parser().parse_args(["fit", "configs/config_fit.yaml", "--coord", "cartesian"])
+    assert args.coord == "cartesian"
 
 
-def test_resolve_data_url_env(monkeypatch):
-    monkeypatch.setenv("BEAMLAB21_DATA_URL", "http://env/cube.npz")
-    assert resolve_data_url() == "http://env/cube.npz"
+def test_fit_coord_flag_auto():
+    args = build_parser().parse_args(["fit", "configs/config_fit.yaml", "--coord", "auto"])
+    assert args.coord == "auto"
+
+
+def test_fit_coord_flag_invalid():
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["fit", "configs/config_fit.yaml", "--coord", "spherical"])
+
+
+def test_compute_subcommand_parsed():
+    args = build_parser().parse_args(["compute", "configs/config_compute.yaml"])
+    assert args.command == "compute"
+    assert args.config == "configs/config_compute.yaml"
+    assert args.base_dir is None
