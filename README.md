@@ -127,9 +127,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Publications
 
+[![ApJ](https://img.shields.io/badge/ApJ-10.3847%2F1538--4357%2Fae1b89-blue.svg)](https://iopscience.iop.org/article/10.3847/1538-4357/ae1b89)
 [![arXiv](https://img.shields.io/badge/arXiv-2412.09527-b31b1b.svg)](https://arxiv.org/abs/2412.09527)
 
-This tool was used in the research article linked above. See
+This tool was used in "Primary Beam Chromaticity in HIRAX. I. Characterization
+from Simulations and Power Spectrum Implications," published in *The
+Astrophysical Journal* (997, 1, 2026); see also the arXiv preprint above. See
 [CITATION.cff](CITATION.cff) for citing the paper and/or this software.
 
 ## Contact

@@ -19,7 +19,7 @@ version: 0.1.0
 date-released: "2026-10-06"
 preferred-citation:
   type: article
-  title: "Primary Beam Chromaticity in HIRAX: I. Characterization from Simulations and Power Spectrum Implications"
+  title: "Primary Beam Chromaticity in HIRAX. I. Characterization from Simulations and Power Spectrum Implications"
   authors:
     - family-names: Sampath
       given-names: Ajith
@@ -57,9 +57,17 @@ preferred-citation:
       given-names: Mario G.
     - family-names: Walters
       given-names: Anthony
-  year: 2024
+  year: 2026
+  journal: The Astrophysical Journal
+  volume: 997
+  issue: 1
+  start: "1"
+  doi: "10.3847/1538-4357/ae1b89"
   identifiers:
+    - type: doi
+      value: "10.3847/1538-4357/ae1b89"
+      description: Published journal article (ApJ)
     - type: other
       value: "arXiv:2412.09527"
       description: arXiv preprint
-  url: "https://arxiv.org/abs/2412.09527"
+  url: "https://iopscience.iop.org/article/10.3847/1538-4357/ae1b89"
