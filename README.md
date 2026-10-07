@@ -311,21 +311,48 @@ diameter is taken from the existing `aperture_diameter` key.
 
 ## Package layout
 
-| Module                                    | Responsibility                                                                                             |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `beamlab21.config`                      | load Jinja2-templated YAML configs                                                                         |
-| `beamlab21.paths`                       | resolve input/output paths relative to a base directory                                                    |
-| `beamlab21.io`                          | read/validate beam cubes (`.npz`/`.h5`); write `.npz` and FITS results                                    |
-| `beamlab21.zernike`                     | Noll ⇄ quantum index bookkeeping                                                                          |
-| `beamlab21.models`                      | analytic 2D Gaussian, generative Zernike-transform beam                                                    |
-| `beamlab21.fitting`                     | `GaussianFit`, `ZernikeFit`                                                                            |
-| `beamlab21.plotting`                    | diagnostic fit/residual plots                                                                              |
-| `beamlab21.metrics`                     | HPBW, solid angle, main-lobe efficiency, directivity, aperture efficiency, beam chromaticity (power-law / ripple / λ/D) |
-| `beamlab21.cst`                         | load and stack CST far-field exports; convert to Cartesian beam cubes                                      |
-| `beamlab21.fit` / `beamlab21.compute` | fitting workflow (Gaussian + Zernike); model synthesis (Gaussian, Zernike, Airy diffraction pattern)       |
-| `beamlab21.cli`                         | `beamlab21` command-line entry point                                                                     |
-| `beamlab21.drone.sim_data`              | drone flight-path generation and pointwise beam evaluation along scattered coordinates (under development) |
-| `beamlab21.drone.fit_data`              | fit a beam model (Gaussian + Zernike) to scattered drone-track measurements                               |
+```
+beamlab21/
+│
+├── config.py          load Jinja2-templated YAML configs
+├── paths.py           resolve input/output paths relative to a base directory
+├── io.py              read/validate beam cubes (.npz/.h5); write .npz and FITS
+├── zernike.py         Noll ⇄ quantum index bookkeeping
+├── models.py          analytic 2D Gaussian, generative Zernike-transform beam
+├── fitting.py         GaussianFit, ZernikeFit (grid-based)
+├── plotting.py        diagnostic fit/residual plots
+├── metrics.py         HPBW, solid angle, main-lobe efficiency, directivity,
+│                          aperture efficiency, beam chromaticity (3 models)
+├── cli.py             beamlab21 command-line entry point
+│
+├── fit/               Gaussian + Zernike fitting pipeline
+│   ├── classes.py     GaussianFit, ZernikeFit
+│   └── pipeline.py    run(), run_all()
+│
+├── compute/           Beam model synthesis
+│   └── pipeline.py    run(), compute_airy_pattern()
+│
+├── cst/               CST far-field import
+│   ├── load.py        load_cst(), stack()
+│   └── pipeline.py    run()  (convert + fit in one call)
+│
+└── drone/             Drone-based beam mapping (under development)
+    ├── sim_data.py    create_drone_path(), evaluate_gaussian_on_path(),
+    │                      evaluate_zernike_on_path(), load_zernike_coef()
+    └── fit_data.py    fit_beam_on_path(), fit_gaussian_on_path(),
+                           fit_zernike_on_path(), DronePathFit
+```
+
+All public names are re-exported at the subpackage level, so both of these work:
+
+```python
+from beamlab21.fit import GaussianFit          # subpackage
+from beamlab21.fitting import GaussianFit      # flat module (legacy, still supported)
+
+from beamlab21.cst import load_cst, stack, run
+from beamlab21.compute import compute_airy_pattern
+from beamlab21.drone import create_drone_path
+```
 
 ## Development
 
