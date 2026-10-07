@@ -1,17 +1,75 @@
 #Author: Ajith Sampath
 #Affiliation: University of Geneva
 
-"""Compute a beam model from Zernike coefficients or Gaussian parameters."""
+"""Compute a beam model from Zernike coefficients, Gaussian parameters, or aperture theory."""
 
 import sys
 
 import numpy as np
 import pandas as pd
+from scipy.special import j1
 
 from beamlab21.config import load_config
 from beamlab21.io import save_npz
 from beamlab21.models import GenZTBeam, gaussian_pointwise, twoD_Gaussian
 from beamlab21.paths import default_base_dir, resolve_path, resolve_under
+
+
+def compute_airy_pattern(freq_mhz, aperture_diam_m, x, y,
+                         xo=0.0, yo=0.0, blockage_diam_m=0.0):
+    """Compute the Airy diffraction pattern for a circular aperture.
+
+    The intensity pattern of a uniformly illuminated circular aperture is
+
+        I(θ) = [2 J₁(u) / u]²,   u = π D sin(θ) / λ
+
+    with I(0) = 1 by the L'Hôpital limit.  An optional central blockage
+    (secondary mirror / subreflector) produces an annular aperture:
+
+        I(θ) = |[2 J₁(u) / u  −  ε² · 2 J₁(ε·u) / (ε·u)]  /  (1 − ε²)|²
+
+    where ε = blockage_diam_m / aperture_diam_m.
+
+    Uses the small-angle approximation sin(θ) ≈ θ (radians), accurate to
+    within 1 % for θ ≲ 10°.
+
+    Parameters
+    ----------
+    freq_mhz : float
+        Observing frequency in MHz.
+    aperture_diam_m : float
+        Aperture diameter in metres.
+    x, y : 1-D arrays
+        Angular output grid axes in degrees (Cartesian).
+    xo, yo : float
+        Beam centre offset in degrees (default 0).
+    blockage_diam_m : float
+        Central blockage (secondary) diameter in metres.  0 = no blockage.
+
+    Returns
+    -------
+    pattern : 2-D array, shape (len(y), len(x))
+        Normalised Airy intensity pattern (peak = 1).
+    """
+    lam_m = 299.792458 / float(freq_mhz)
+    Xg, Yg = np.meshgrid(x, y)
+    r_rad = np.deg2rad(np.hypot(Xg - xo, Yg - yo))  # angular radius in radians
+
+    u = np.pi * float(aperture_diam_m) * r_rad / lam_m
+    # L'Hôpital: 2 J₁(u)/u → 1 as u → 0
+    with np.errstate(invalid="ignore", divide="ignore"):
+        airy_term = np.where(u == 0, 1.0, 2.0 * j1(u) / u)
+
+    eps = float(blockage_diam_m) / float(aperture_diam_m) if blockage_diam_m > 0 else 0.0
+    if eps > 0:
+        u_b = eps * u
+        with np.errstate(invalid="ignore", divide="ignore"):
+            block_term = np.where(u_b == 0, 1.0, 2.0 * j1(u_b) / u_b)
+        pattern = ((airy_term - eps ** 2 * block_term) / (1.0 - eps ** 2)) ** 2
+    else:
+        pattern = airy_term ** 2
+
+    return pattern
 
 
 def run(config_path, base_dir=None, coord_type=None):
@@ -105,8 +163,29 @@ def run(config_path, base_dir=None, coord_type=None):
             print("Computed Zernike model is not saved! "
                   "Set save_zernike_model to True in config_compute.yaml :)\n")
 
-    if not config["gen_gaussian_model"] and not config["gen_zernike_model"]:
-        print("Set one of gen_gaussian_model / gen_zernike_model to be true!\n")
+    if config.get("gen_airy_pattern", False):
+        print("Generating Airy diffraction pattern...")
+        blockage = config.get("airy_blockage_diameter", 0.0)
+        xo_airy = config.get("airy_offset_x", 0.0)
+        yo_airy = config.get("airy_offset_y", 0.0)
+        airy = compute_airy_pattern(freq, Deff, x, y,
+                                    xo=xo_airy, yo=yo_airy,
+                                    blockage_diam_m=blockage)
+        print("Computed Airy pattern!\n")
+
+        if config.get("save_airy_pattern", True):
+            aoutput_dir = resolve_path(config["aoutput_dir"], base_dir)
+            name = config["aoutput_name"] + config.get("aoutput_format", ".npz")
+            path = save_npz(str(aoutput_dir), name, x=x, y=y, data=airy)
+            print(f"Airy pattern saved → {path}")
+        else:
+            print("Airy pattern not saved. "
+                  "Set save_airy_pattern to True in config_compute.yaml.\n")
+
+    if (not config["gen_gaussian_model"]
+            and not config["gen_zernike_model"]
+            and not config.get("gen_airy_pattern", False)):
+        print("Set one of gen_gaussian_model / gen_zernike_model / gen_airy_pattern to be true!\n")
         print("Exiting without any computing ... :(\n")
         sys.exit()
 

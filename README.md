@@ -224,6 +224,74 @@ summary = beam_summary(sigx, sigy, data, x, y, xo=xo, yo=yo, fac=1.5)
 `sigx`, `sigy` come from the `scaleparameters_*.csv` files written by
 `beamlab21 fit`, or directly from `GaussianFit.optimize_Gauss`.
 
+### Beam chromaticity
+
+Fit a power-law model to the beam width across frequency:
+
+```python
+from beamlab21.metrics import fit_beam_chromaticity
+import pandas as pd
+
+sp = pd.read_csv("outputs/scaleparameters_all.csv")
+chrom = fit_beam_chromaticity(sp["freq_mhz"], sp["sigx"], sp["sigy"], nu0_mhz=400)
+print(chrom["alpha_x"])   # spectral index for x width
+print(chrom["alpha_y"])   # spectral index for y width
+```
+
+Returns `sigma0_x/y` (width at ν₀), `alpha_x/y` (spectral index), and
+`sigma_fit_x/y` (model evaluated at every input frequency).
+
+### Sidelobe characterisation
+
+```python
+from beamlab21.metrics import peak_sidelobe
+
+psl = peak_sidelobe(data, x, y, xo, yo, sigx, sigy, exclusion_fac=2.5)
+print(psl["psl_relative_db"])   # e.g. -18.5 dB
+print(psl["psl_r"])             # angular distance from boresight (deg)
+```
+
+The main lobe is masked out as an ellipse of radius `exclusion_fac·σ` before
+the peak is found.
+
+### Aperture efficiency
+
+```python
+from beamlab21.metrics import aperture_efficiency
+
+ae = aperture_efficiency(freq_mhz=400, sigx=20.0, sigy=18.0, dish_diameter_m=6.0)
+print(ae["eta_ap"])       # e.g. 0.63
+print(ae["A_eff_m2"])     # effective collecting area in m²
+```
+
+Uses the analytic Gaussian beam solid angle Ω_A = π·σx·σy / ln 2 (sr) and
+η_ap = λ² / (4π · Ω_A · A_geom).
+
+### FITS export
+
+```python
+from beamlab21.io import save_fits
+
+save_fits("outputs/beam.fits", x, y, freq_arr_mhz, data)
+```
+
+Writes a 3-D FITS cube (freq, y, x) with WCS keywords for the spatial axes
+(degrees) and the frequency axis (Hz).
+
+### Cross-polarisation leakage
+
+```python
+from beamlab21.cst import cross_pol_leakage
+
+xpol = cross_pol_leakage("data/farfield.txt", freq_mhz=400, size=1501)
+print(xpol["peak_leakage_db"])   # peak |cross| / |copol| in dB
+print(xpol["mean_leakage_db"])   # mean leakage over the main lobe (dB)
+```
+
+Returns the full leakage map (`xpol["leakage"]`), the copol and cross-pol
+grids, and summary statistics. The cross-pol column (`Abs(Cross)`) must be
+present in the CST export (column index 3).
+
 ---
 
 ## Package layout
@@ -232,13 +300,13 @@ summary = beam_summary(sigx, sigy, data, x, y, xo=xo, yo=yo, fac=1.5)
 | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `beamlab21.config`                      | load Jinja2-templated YAML configs                                                                         |
 | `beamlab21.paths`                       | resolve input/output paths relative to a base directory                                                    |
-| `beamlab21.io`                          | read/validate beam cubes (`.npz`/`.h5`), write `.npz` results                                              |
+| `beamlab21.io`                          | read/validate beam cubes (`.npz`/`.h5`); write `.npz` and FITS results                                    |
 | `beamlab21.zernike`                     | Noll ⇄ quantum index bookkeeping                                                                          |
 | `beamlab21.models`                      | analytic 2D Gaussian, generative Zernike-transform beam                                                    |
 | `beamlab21.fitting`                     | `GaussianFit`, `ZernikeFit`                                                                            |
 | `beamlab21.plotting`                    | diagnostic fit/residual plots                                                                              |
-| `beamlab21.metrics`                     | HPBW, beam solid angle, main-lobe efficiency, directivity                                                  |
-| `beamlab21.cst`                         | load and stack CST far-field text exports; convert to Cartesian beam cubes                                 |
+| `beamlab21.metrics`                     | HPBW, solid angle, main-lobe efficiency, directivity, chromaticity fit, sidelobe, aperture efficiency      |
+| `beamlab21.cst`                         | load and stack CST far-field exports; cross-pol leakage; convert to Cartesian beam cubes                   |
 | `beamlab21.fit` / `beamlab21.compute` | the two analysis workflows (single-channel and multi-channel)                                              |
 | `beamlab21.cli`                         | `beamlab21` command-line entry point                                                                     |
 | `beamlab21.drone.sim_data`              | drone flight-path generation and pointwise beam evaluation along scattered coordinates (under development) |

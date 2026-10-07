@@ -52,5 +52,18 @@
   zoutput_dir : "outputs"
   zoutput_name: "ComputedZernikeModel__{{ frequency }}"  # output file name
   zoutput_format: ".npz"      # output file format, options are "npz" or "npy"
+
+
+  # Airy diffraction pattern parameters
+  # Computes [2 J₁(u)/u]² for a circular aperture of diameter aperture_diameter (set above).
+  gen_airy_pattern: False
+  airy_blockage_diameter: 0.0  # secondary/subreflector diameter in metres (0 = unblocked)
+  airy_offset_x: 0.0           # beam centre x offset in degrees
+  airy_offset_y: 0.0           # beam centre y offset in degrees
+
+  save_airy_pattern: True
+  aoutput_dir: "outputs"
+  aoutput_name: "ComputedAiryPattern_{{ frequency }}"
+  aoutput_format: ".npz"
   
 

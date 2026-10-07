@@ -9,6 +9,7 @@ import os
 import h5py
 import numpy as np
 import pandas as pd
+from astropy.io import fits
 
 
 def _load_beam_npz(datafile):
@@ -84,7 +85,7 @@ def load_beam(datafile):
 
     x, y, freq_arr, error, data = loader(datafile)
     data = data.astype(float, copy=True)
-    data[np.isnan(data)] = 0.0
+    data[~np.isfinite(data)] = 0.0
     freq_arr = freq_arr * 1e3  # GHz -> MHz
     nchan = freq_arr.shape[0]
 
@@ -99,6 +100,67 @@ def save_npz(output_dir, name, **arrays):
     path = os.path.join(output_dir, name)
     np.savez(path, **arrays)
     return path
+
+
+def save_fits(output_path, x, y, freq_arr_mhz, data, overwrite=True):
+    """Save a beam cube to a FITS file.
+
+    The cube is written as a primary HDU with shape ``(n_freq, ny, nx)``.
+    WCS keywords describe the x/y pixel scale and the frequency axis.
+
+    Parameters
+    ----------
+    output_path : str
+        Destination ``.fits`` file path.
+    x, y : 1-D arrays
+        Coordinate axes in degrees (Cartesian) or r / theta (polar).
+        Assumed evenly spaced; only the step size is used for WCS.
+    freq_arr_mhz : 1-D array
+        Frequencies in MHz.
+    data : 3-D array, shape (n_freq, ny, nx)
+        Beam amplitude cube.
+    overwrite : bool
+        Overwrite an existing file (default True).
+    """
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+
+    hdr = fits.Header()
+    hdr["SIMPLE"]  = True
+    hdr["BITPIX"]  = -64
+    hdr["NAXIS"]   = 3
+    hdr["NAXIS1"]  = data.shape[2]   # x
+    hdr["NAXIS2"]  = data.shape[1]   # y
+    hdr["NAXIS3"]  = data.shape[0]   # freq
+
+    # Spatial axes (degrees)
+    dx = float(x[1] - x[0]) if len(x) > 1 else 1.0
+    dy = float(y[1] - y[0]) if len(y) > 1 else 1.0
+    hdr["CTYPE1"] = "X--DEG"
+    hdr["CRPIX1"] = (len(x) + 1) / 2.0
+    hdr["CRVAL1"] = float(x[len(x) // 2])
+    hdr["CDELT1"] = dx
+    hdr["CUNIT1"] = "deg"
+
+    hdr["CTYPE2"] = "Y--DEG"
+    hdr["CRPIX2"] = (len(y) + 1) / 2.0
+    hdr["CRVAL2"] = float(y[len(y) // 2])
+    hdr["CDELT2"] = dy
+    hdr["CUNIT2"] = "deg"
+
+    # Frequency axis
+    df = float(freq_arr_mhz[1] - freq_arr_mhz[0]) if len(freq_arr_mhz) > 1 else 1.0
+    hdr["CTYPE3"] = "FREQ"
+    hdr["CRPIX3"] = 1.0
+    hdr["CRVAL3"] = float(freq_arr_mhz[0]) * 1e6   # MHz → Hz
+    hdr["CDELT3"] = df * 1e6
+    hdr["CUNIT3"] = "Hz"
+
+    hdr["BUNIT"]  = "AMPLITUDE"
+    hdr["ORIGIN"] = "BeamLab21"
+
+    hdu = fits.PrimaryHDU(data=data.astype(np.float64), header=hdr)
+    hdu.writeto(output_path, overwrite=overwrite)
+    print(f"FITS cube written → {output_path}  (shape {data.shape})")
 
 
 def load_coefficients(coeffile):

@@ -41,7 +41,14 @@ class GaussianFit:
         chan = int(np.argmin(np.abs(self.freq_arr - freq)))
         self.data = self.data_cube[chan]
         if normalize_data:
-            self.data = self.data / np.max(self.data)
+            _peak = float(np.max(self.data))
+            if _peak > 0:
+                self.data = self.data / _peak
+            else:
+                raise ValueError(
+                    f"Beam slice at freq={freq} MHz has no positive values — "
+                    "check that the correct column (copol/cross/e) was loaded."
+                )
 
         if self.error is None:
             if error_type == "uniform":
@@ -128,7 +135,10 @@ class ZernikeFit:
             print("Data not normalized.\n")
 
         if error_type == "proportional":
-            self.error = np.abs(self.data) * 0.1
+            # Floor at 1 % of the peak so zero-padded pixels (e.g. outside CST
+            # coverage) don't produce a zero error and blow up the chi-square.
+            self.error = np.maximum(np.abs(self.data) * 0.1,
+                                    0.01 * float(np.max(np.abs(self.data))))
         elif error_type == "uniform":
             self.error = np.ones_like(self.data)
         else:
@@ -136,7 +146,10 @@ class ZernikeFit:
 
     def basis_N(self, params):
         """Generate the Bessel-derived basis for the given scale parameters."""
-        self.sigx, self.sigy = params
+        # Cross-pol beams can yield near-zero sigmas from the Gaussian fit;
+        # clamp to a small positive value to prevent x/sigx → inf in basis.
+        self.sigx = max(float(abs(params[0])), 1e-3)
+        self.sigy = max(float(abs(params[1])), 1e-3)
 
         if self.coord_type == "cartesian":
             xm, ym = np.meshgrid(self.x / self.sigx, self.y / self.sigy)
@@ -172,7 +185,11 @@ class ZernikeFit:
         w = 1 / self.error.flatten() ** 2
         Bw = self.Basis.T * np.sqrt(w[:, np.newaxis])
         Cw = self.data.flatten() * np.sqrt(w)
-        self.coef, _, _, _ = sp.linalg.lstsq(Bw, Cw)
+        # Guard against any remaining inf/NaN in the weighted matrices
+        # (can arise from extreme basis values near the grid edge).
+        Bw = np.nan_to_num(Bw, nan=0.0, posinf=0.0, neginf=0.0)
+        Cw = np.nan_to_num(Cw, nan=0.0, posinf=0.0, neginf=0.0)
+        self.coef, _, _, _ = sp.linalg.lstsq(Bw, Cw, check_finite=False)
         self.Expected = np.dot(self.Basis.T, self.coef).reshape(self.data.shape)
         Expected = self.Expected.flatten()
         data = self.data.flatten()

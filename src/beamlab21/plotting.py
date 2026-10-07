@@ -28,18 +28,19 @@ def plot_results_cart(data, model, freq, N, x, y, plot_format, plot_directory, p
     ax2 = plt.subplot(132)
     ax3 = plt.subplot(133)
 
-    z1 = ax1.imshow(np.log(data), cmap=plot_cmap, extent=extent)
+    z1 = ax1.imshow(np.log(np.clip(data, 1e-10, None)), cmap=plot_cmap, extent=extent)
     ax1.grid(False)
     plt.colorbar(z1, ax=ax1, fraction=0.047)
     ax1.set_title("Simulated CST beam")
 
-    z2 = ax2.imshow(np.log(model), cmap=plot_cmap, extent=extent)
+    z2 = ax2.imshow(np.log(np.clip(model, 1e-10, None)), cmap=plot_cmap, extent=extent)
     ax2.grid(False)
     plt.colorbar(z2, ax=ax2, fraction=0.047)
     ax2.set_title(f"Fit with {N} basis functions")
     ax2.get_yaxis().set_visible(False)
 
-    z3 = ax3.imshow((residue / model) * 100, cmap="seismic", extent=extent)
+    z3 = ax3.imshow((residue / np.where(model == 0, 1, model)) * 100,
+                    cmap="seismic", extent=extent)
     ax3.grid(False)
     plt.colorbar(z3, ax=ax3, fraction=0.047)
     ax3.set_title("Percentage Residuals")

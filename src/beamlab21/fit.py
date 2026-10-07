@@ -186,17 +186,19 @@ def run_all(config_path, channels=None, base_dir=None, coord_type=None, datafile
             df.insert(0, "freq_mhz", ch)
             sp_dfs.append(df)
 
+    combined_coef_path = None
     if coef_dfs:
         out_dir = str(resolve_path(_config0["out_coef_dir"], _base))
-        combined_path = os.path.join(out_dir, "coefficients_all.csv")
-        pd.concat(coef_dfs, ignore_index=True).to_csv(combined_path, index=False)
-        print(f"\nStacked coefficients  → {combined_path}")
+        combined_coef_path = os.path.join(out_dir, "coefficients_all.csv")
+        pd.concat(coef_dfs, ignore_index=True).to_csv(combined_coef_path, index=False)
+        print(f"\nStacked coefficients  → {combined_coef_path}")
 
     if sp_dfs:
         out_dir = str(resolve_path(_config0["out_sp_dir"], _base))
         combined_path = os.path.join(out_dir, "scaleparameters_all.csv")
         pd.concat(sp_dfs, ignore_index=True).to_csv(combined_path, index=False)
         print(f"Stacked scale params  → {combined_path}")
+
 
 
 def main():

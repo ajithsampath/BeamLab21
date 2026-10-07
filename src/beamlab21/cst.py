@@ -30,11 +30,13 @@ from beamlab21 import fit as _fit
 _COL = {
     "copol": 5,
     "e": 2,
+    "cross": 3,
 }
 
 _COL_LABEL = {
     "copol": "Abs(Copol) [dB(V/m)]",
     "e": "Abs(E) [dB(V/m)]",
+    "cross": "Abs(Cross) [dB(V/m)]",
 }
 
 
@@ -102,7 +104,10 @@ def load_cst(file, freq_mhz, column="copol", size=1501, xy_max=75.0):
         method="cubic",
         fill_value=np.nan,
     )
-    Zg = np.where(np.isnan(Zg), 0.0, Zg)
+    # Cubic interpolation can produce negative overshoots and infs near the
+    # convex-hull boundary; amplitude must be finite and non-negative.
+    Zg = np.where(np.isfinite(Zg), Zg, 0.0)
+    Zg = np.maximum(Zg, 0.0)
 
     data = Zg[np.newaxis, :, :]               # (1, size, size)
     freq_arr = np.array([freq_mhz / 1e3])     # MHz → GHz
