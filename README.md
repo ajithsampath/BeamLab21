@@ -226,33 +226,38 @@ summary = beam_summary(sigx, sigy, data, x, y, xo=xo, yo=yo, fac=1.5)
 
 ### Beam chromaticity
 
-Fit a power-law model to the beam width across frequency:
+Fit a chromatic model to beam width vs frequency. Three models are available:
 
 ```python
 from beamlab21.metrics import fit_beam_chromaticity
 import pandas as pd
 
 sp = pd.read_csv("outputs/scaleparameters_all.csv")
-chrom = fit_beam_chromaticity(sp["freq_mhz"], sp["sigx"], sp["sigy"], nu0_mhz=400)
-print(chrom["alpha_x"])   # spectral index for x width
-print(chrom["alpha_y"])   # spectral index for y width
+
+# Power-law: σ(ν) = σ₀ · (ν/ν₀)^α
+chrom = fit_beam_chromaticity(sp["freq_mhz"], sp["sigx"], sp["sigy"],
+                              nu0_mhz=400, model="powerlaw")
+print(chrom["alpha_x"])     # spectral index (≈ −1 for a diffraction-limited dish)
+
+# Power-law + sinusoidal ripple: σ(ν) = σ₀·(ν/ν₀)^α · [1 + A·sin(2π(ν/ν₀)/P + φ)]
+# Period P and amplitude A are seeded automatically from an FFT of the residuals.
+chrom = fit_beam_chromaticity(sp["freq_mhz"], sp["sigx"], sp["sigy"],
+                              model="powerlaw_ripple")
+print(chrom["A_x"])         # ripple amplitude (fractional)
+print(chrom["P_mhz_x"])     # ripple period in MHz  (≈ c / 2L for path-length L)
+
+# λ/D theoretical beamwidth: σ(ν) = k · λ(ν) / D
+# One free parameter k per axis; requires the dish diameter.
+chrom = fit_beam_chromaticity(sp["freq_mhz"], sp["sigx"], sp["sigy"],
+                              model="lambda_over_D", dish_diameter_m=6.0)
+print(chrom["k_x"])         # illumination efficiency coefficient (≈ 1 for uniform)
 ```
 
-Returns `sigma0_x/y` (width at ν₀), `alpha_x/y` (spectral index), and
-`sigma_fit_x/y` (model evaluated at every input frequency).
-
-### Sidelobe characterisation
-
-```python
-from beamlab21.metrics import peak_sidelobe
-
-psl = peak_sidelobe(data, x, y, xo, yo, sigx, sigy, exclusion_fac=2.5)
-print(psl["psl_relative_db"])   # e.g. -18.5 dB
-print(psl["psl_r"])             # angular distance from boresight (deg)
-```
-
-The main lobe is masked out as an ellipse of radius `exclusion_fac·σ` before
-the peak is found.
+| Model | Free params | Use when |
+|---|---|---|
+| `"powerlaw"` | σ₀, α | smooth chromatic trend |
+| `"powerlaw_ripple"` | σ₀, α, A, P, φ | reflections / standing waves produce a ripple |
+| `"lambda_over_D"` | k | you want the theoretical diffraction limit with a single coefficient |
 
 ### Aperture efficiency
 
@@ -278,19 +283,29 @@ save_fits("outputs/beam.fits", x, y, freq_arr_mhz, data)
 Writes a 3-D FITS cube (freq, y, x) with WCS keywords for the spatial axes
 (degrees) and the frequency axis (Hz).
 
-### Cross-polarisation leakage
+### Airy diffraction pattern
+
+Compute the theoretical `[2J₁(u)/u]²` diffraction pattern for a circular aperture
+and optionally add a central blockage (annular aperture / secondary mirror):
 
 ```python
-from beamlab21.cst import cross_pol_leakage
+from beamlab21.compute import compute_airy_pattern
+import numpy as np
 
-xpol = cross_pol_leakage("data/farfield.txt", freq_mhz=400, size=1501)
-print(xpol["peak_leakage_db"])   # peak |cross| / |copol| in dB
-print(xpol["mean_leakage_db"])   # mean leakage over the main lobe (dB)
+x = np.linspace(-30, 30, 256)
+y = np.linspace(-30, 30, 256)
+
+# Unblocked aperture
+airy = compute_airy_pattern(freq_mhz=400, aperture_diam_m=6.0, x=x, y=y)
+
+# With subreflector blockage (annular aperture)
+airy = compute_airy_pattern(freq_mhz=400, aperture_diam_m=6.0, x=x, y=y,
+                             blockage_diam_m=1.0)
 ```
 
-Returns the full leakage map (`xpol["leakage"]`), the copol and cross-pol
-grids, and summary statistics. The cross-pol column (`Abs(Cross)`) must be
-present in the CST export (column index 3).
+Can also be triggered via `config_compute.yaml` by setting
+`gen_airy_pattern: True` and `airy_blockage_diameter: 1.0`. The aperture
+diameter is taken from the existing `aperture_diameter` key.
 
 ---
 
@@ -305,9 +320,9 @@ present in the CST export (column index 3).
 | `beamlab21.models`                      | analytic 2D Gaussian, generative Zernike-transform beam                                                    |
 | `beamlab21.fitting`                     | `GaussianFit`, `ZernikeFit`                                                                            |
 | `beamlab21.plotting`                    | diagnostic fit/residual plots                                                                              |
-| `beamlab21.metrics`                     | HPBW, solid angle, main-lobe efficiency, directivity, chromaticity fit, sidelobe, aperture efficiency      |
-| `beamlab21.cst`                         | load and stack CST far-field exports; cross-pol leakage; convert to Cartesian beam cubes                   |
-| `beamlab21.fit` / `beamlab21.compute` | the two analysis workflows (single-channel and multi-channel)                                              |
+| `beamlab21.metrics`                     | HPBW, solid angle, main-lobe efficiency, directivity, aperture efficiency, beam chromaticity (power-law / ripple / λ/D) |
+| `beamlab21.cst`                         | load and stack CST far-field exports; convert to Cartesian beam cubes                                      |
+| `beamlab21.fit` / `beamlab21.compute` | fitting workflow (Gaussian + Zernike); model synthesis (Gaussian, Zernike, Airy diffraction pattern)       |
 | `beamlab21.cli`                         | `beamlab21` command-line entry point                                                                     |
 | `beamlab21.drone.sim_data`              | drone flight-path generation and pointwise beam evaluation along scattered coordinates (under development) |
 | `beamlab21.drone.fit_data`              | fit a beam model (Gaussian + Zernike) to scattered drone-track measurements                               |
