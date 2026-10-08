@@ -44,4 +44,5 @@ RUN pip install --no-cache-dir ".[dev]"
 
 COPY tests/ ./tests/
 
-CMD ["pytest", "-q"]
+ENTRYPOINT ["pytest"]
+CMD ["-q"]
