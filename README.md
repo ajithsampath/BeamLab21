@@ -31,7 +31,7 @@ expects.
 
 The bundled example, `data/Example_cube.npz` (~39 MB), is **not** distributed with
 the repo (removed for confidentiality). It can be provided on request — contact the
-collaboration (see [Contact](#contact)). Once you have a copy, place it yourself at
+collaboration (see [Contact](#contact)). Once you have a copy, place it at
 `data/Example_cube.npz`.
 
 ## Usage (command line)
