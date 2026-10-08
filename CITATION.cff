@@ -15,8 +15,9 @@ authors:
     orcid: "https://orcid.org/0000-0002-0015-3870"
 license: MIT
 repository-code: "https://github.com/ajithsampath/BeamLab21"
+doi: "10.5281/zenodo.23235974"
 version: 0.1.0
-date-released: "2026-10-06"
+date-released: "2026-10-08"
 preferred-citation:
   type: article
   title: "Primary Beam Chromaticity in HIRAX. I. Characterization from Simulations and Power Spectrum Implications"

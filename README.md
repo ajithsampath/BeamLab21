@@ -443,6 +443,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 [![ApJ](https://img.shields.io/badge/ApJ-10.3847%2F1538--4357%2Fae1b89-blue.svg)](https://iopscience.iop.org/article/10.3847/1538-4357/ae1b89)
 [![arXiv](https://img.shields.io/badge/arXiv-2412.09527-b31b1b.svg)](https://arxiv.org/abs/2412.09527)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23235974.svg)](https://doi.org/10.5281/zenodo.23235974)
 
 This tool was used in "Primary Beam Chromaticity in HIRAX. I. Characterization
 from Simulations and Power Spectrum Implications," published in *The
