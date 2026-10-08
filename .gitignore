@@ -59,3 +59,6 @@ tests/drone_fit_dev.ipynb
 
 # Local tutorial notebook (not distributed — run locally to verify functionality)
 tutorial.ipynb
+
+# Example notebooks and scripts (kept local; README covers the same material)
+examples/

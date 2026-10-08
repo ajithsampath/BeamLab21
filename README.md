@@ -423,6 +423,8 @@ Astrophysical Journal* (997, 1, 2026); see also the arXiv preprint above. See
 
 Ajith Sampath — [ajithsampath1997@gmail.com](mailto:ajithsampath1997@gmail.com)
 
+Feel free to contact me for any difficulties, issues or bug reports — or raise them directly on [GitHub](https://github.com/ajithsampath/BeamLab21/issues) :)
+
 ## Acknowledgements
 
 Anthropic's Claude was used to assist with documentation and code structuring in this repository.
