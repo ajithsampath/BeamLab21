@@ -13,8 +13,38 @@ It also includes drone-based beam mapping (**under development**) — see
 
 ## Install
 
+**Option A — pip (editable install):**
+
 ```bash
 pip install -e ".[dev]"      # editable install + dev tools (pytest, ruff)
+```
+
+**Option B — Docker (no installation required):**
+
+A pre-built image is published to the GitHub Container Registry on every release:
+
+```bash
+# pull the latest release
+docker pull ghcr.io/ajithsampath/beamlab21:latest
+
+# fit a beam cube (mount your data/ and outputs/ directories)
+docker run --rm \
+    -v $(pwd)/data:/app/data \
+    -v $(pwd)/outputs:/app/outputs \
+    -v $(pwd)/configs:/app/configs \
+    ghcr.io/ajithsampath/beamlab21:latest \
+    fit configs/config_fit.yaml
+
+# or with a specific version
+docker pull ghcr.io/ajithsampath/beamlab21:0.1.0
+```
+
+With `docker compose` (uses the `docker-compose.yml` in the repo root):
+
+```bash
+docker compose run --rm beamlab21 fit    configs/config_fit.yaml
+docker compose run --rm beamlab21 compute configs/config_compute.yaml
+docker compose run --rm beamlab21 --help
 ```
 
 ## Input data
@@ -423,7 +453,7 @@ Astrophysical Journal* (997, 1, 2026); see also the arXiv preprint above. See
 
 Ajith Sampath — [ajithsampath1997@gmail.com](mailto:ajithsampath1997@gmail.com)
 
-Feel free to contact me for any difficulties, issues or bug reports — or raise them directly on [GitHub](https://github.com/ajithsampath/BeamLab21/issues) :)
+Feel free to contact me for any difficulties, issues or bug reports — or raise them directly on [GitHub Issues](https://github.com/ajithsampath/BeamLab21/issues) :)
 
 ## Acknowledgements
 

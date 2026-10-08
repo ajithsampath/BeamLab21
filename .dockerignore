@@ -1,0 +1,47 @@
+# Git
+.git/
+.gitignore
+
+# Python artefacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Test / lint caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Generated outputs (mounted at runtime instead)
+outputs/
+
+# Large / downloaded data files — mount a volume at runtime
+data/*.npz
+data/*.npy
+data/*.h5
+data/*.hdf5
+data/*.txt
+
+# Notebooks
+*.ipynb
+tutorial.ipynb
+examples/
+
+# IDE / OS
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Secrets
+*.env

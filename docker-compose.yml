@@ -1,0 +1,31 @@
+services:
+
+  # ── runtime: run any beamlab21 CLI command ────────────────────────────────
+  # Usage examples:
+  #   docker compose run --rm beamlab21 fit    configs/config_fit.yaml
+  #   docker compose run --rm beamlab21 compute configs/config_compute.yaml
+  #   docker compose run --rm beamlab21 fit-all configs/config_fit.yaml
+  #   docker compose run --rm beamlab21 --help
+  beamlab21:
+    build:
+      context: .
+      target: base
+    volumes:
+      - ./data:/app/data          # mount your beam cubes here
+      - ./outputs:/app/outputs    # results written back to host
+      - ./configs:/app/configs    # override configs without rebuilding
+    working_dir: /app
+
+  # ── dev: run the test suite ───────────────────────────────────────────────
+  # Usage:
+  #   docker compose run --rm test
+  #   docker compose run --rm test pytest tests/test_metrics_extended.py -v
+  test:
+    build:
+      context: .
+      target: dev
+    volumes:
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+      - ./configs:/app/configs
+    working_dir: /app
